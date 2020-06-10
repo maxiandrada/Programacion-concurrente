@@ -11,13 +11,12 @@ class Solucion(Grafo):
 
     def __str__(self):
         return "Recorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(self.getA()) + " \nCosto Asociado: " + str(self.__costoAsociado)
-
     def __repr__(self):
         return str(self.getV())
     def __eq__(self, otro):
-        return (self.__costoAsociado == otro.__costoAsociado)
+        return (self.__costoAsociado == otro.__costoAsociado and self.__class__ == otro.__class__)
     def __ne__(self, otro):
-        return (self.__costoAsociado != otro.__costoAsociado)
+        return (self.__costoAsociado != otro.__costoAsociado and self.__class__ == otro.__class__)
     def __gt__(self, otro):
         return self.__costoAsociado > otro.__costoAsociado
     def __lt__(self, otro):
@@ -28,10 +27,11 @@ class Solucion(Grafo):
         return self.__costoAsociado <= otro.__costoAsociado
     def __len__(self):
         return len(self._V)
-    
     def setCosto(self, costo):
         self.__costoAsociado=costo
     
+    def solInicial(self, secuenciaInd, capacidad):
+        
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
         masCercano = matrizDist[pos][pos]
@@ -44,10 +44,10 @@ class Solucion(Grafo):
                 indMasCercano = i
         
         return indMasCercano 
-
+    
     def solucionVecinosCercanos(self):
-        inicio = self._V[0]
-        matrizDist = self._matrizDistancias
+        inicio = self.getV()[0]
+        matrizDist = self.getMatriz()
 
         recorrido = []
         visitados = []
@@ -73,4 +73,3 @@ class Solucion(Grafo):
             alAzar.append(Vertice(i))
 
         return alAzar
-

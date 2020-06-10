@@ -11,14 +11,14 @@ import copy
 from clsTxt import clsTxt
 from time import time
 
-class VCRP:
+class CVRP:
     def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
         self._G = Grafo(M)      #Grafo original
-        self.__Distancias = M 
+        self.__Distancias = M
         self.__Demanda = D      #Demanda de los clientes
         self.__capacidad = capac
         self.__soluciones = []
-        self.__rutas = []   #Lista de nroVehiculos soluciones
+        self.__rutas = []   #Solucion general del CVRP
         self.__nroIntercambios=intercamb*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
         self.__opt=opt
         self.__optimo = optimo
@@ -49,13 +49,52 @@ class VCRP:
         print(sum(self.__Demanda))
         
         self.rutasIniciales(solI)
-
         #self.tabuSearch(solInicial)
 
+    #Longitud que debería tener cada solucion por cada vehiculo
+    def longitudSoluciones(self, length, nroVehiculos):
+        length = (length/nroVehiculos)
+        decimales = math.modf(length)[0]
+        if decimales < 5.0:
+            length = int(length)
+        else:
+            length = int(length)+1
+        return length
+
+    #Rutas iniciales o la primera solucion
     def rutasIniciales(self, strSolInicial):
-        S = []
-        #for i in range(self.__nroVehiculos):
-        #    S = 
+        length = self.longitudSoluciones(len(self.__Distancias), self.__nroVehiculos)
+        ini = 0
+        fin = length
+
+        #Empezamos con una facil [1,2,3,4,5,...] solucion secuencial
+        secuenciaInd = list(range(0,len(self.__Distancias)))
+        S = Solucion(self.__Distancias)
+        
+        if(strSolInicial=="Al azar"):
+            secuenciaInd = secuenciaInd[1:]
+            random.shuffle(secuenciaInd)
+            secuenciaInd = [1]+secuenciaInd
+        if(strSolInicial=="Vecino mas cercano"):
+            pass
+        
+        for i in range(self.__nroVehiculos):
+            #Sin contar la vuelta (x,1)
+            #[(1,2);(2,3);(3,4);(4,1)] - [(1,5);(5,6);(6,7);(7,1)] - [(1,7);(7,8);(8,9);(9,10);(10,1)]
+            #length = 3, nroVehiculos = 3
+            #i=0    ini = 0, fin = 0+3 -1 = 2
+            #i=1    ini = 3, fin = 3+3 -1 = 5
+            #i=2    ini = 6, fin = [-1]
+            #i=3    --> no ingresa al for pero ini = 11
+            if (i == self.__nroVehiculos-1):
+                fin = len(self.__Distancias)-1
+            S, ini = S.solInicial(secuenciaInd[ini:fin], self.__capacidad)
+            length = self.longitudSoluciones(len(self.__Distancias)-ini, self.__nroVehiculos-i-1)
+            fin = ini+length -1
+            self.__rutas.append(S)
+        if ini <= len(self.__Distancias):
+            print("La solucion inicial no es factible. Implementar luego....")
+
 
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):

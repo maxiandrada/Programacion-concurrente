@@ -2,7 +2,7 @@ import tkinter as tk
 import re
 import math
 import time
-from VCRP import VCRP
+from CVRP import CVRP
 from Vertice import Vertice
 import tkinter.filedialog
 import os
@@ -15,7 +15,7 @@ class Ventana(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.geometry("450x500+350+130")
-        self.title("Buqueda tabu aplicada a VCRP")
+        self.title("Buqueda tabu aplicada a CVRP")
         self.__demanda = []
         self.__nroVehiculos = []
         self.__nro = 0
@@ -132,7 +132,7 @@ class Ventana(tk.Tk):
             print("Se resolverá "+ str(self.__cantidadResolver[i].get())+" veces "+ self.__nombreArchivo)
             for j in range(0,self.__cantidadResolver[i].get()):
                 print("RESOLVIENDO ------------------> "+str(self.__nombreArchivo))
-                self.__VCRP = VCRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__capacidad[i],
+                self.__cvrp = CVRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__capacidad[i],
                         self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.__eSolInicial[i].get(),  self.__nroIntercambios[i].get(),
                         self.__eOpt[i].get(), self.__boxADD[i].get(), self.__boxDROP[i].get(), self.__eTime[i].get(), self.__optimo[i])
                 j
@@ -203,7 +203,7 @@ class Ventana(tk.Tk):
         print("Primera instancia: "+str(self.__nombreArchivo))
         
     def openFile(self):
-        self.__listaInstancias = tk.filedialog.askopenfilenames(initialdir = ".",title = "Seleccione Intancia/s VCRP",filetypes = (("all files","*.*"),("VRP files","*.vrp")))
+        self.__listaInstancias = tk.filedialog.askopenfilenames(initialdir = ".",title = "Seleccione Intancia/s CVRP",filetypes = (("all files","*.*"),("VRP files","*.vrp")))
         self.__listaInstancias = list(self.__listaInstancias)
         self.__mypath = ntpath.split(self.__listaInstancias[0])[0]
         self.__listaInstancias = [ntpath.split(f)[1] for f in self.__listaInstancias]

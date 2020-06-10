@@ -42,7 +42,6 @@ class Grafo:
     def __str__(self):
         salida = ""
         V = self.getV()
-        
         #Muestra la primera fila con los vertices
         if(len(self._matrizDistancias) == len(self.getV())):
             for i in range(0,len(V)):
