@@ -60,6 +60,7 @@ class Ventana(tk.Tk):
         self.__label_RecomiendacTiempo = []
         self.__matrizDistancias = []
         self.__optimo = []
+        self.__capacidad = []
         self.__cantidadResolver =[]
         self.__labelCantidadResolver = []
         self.__labelRecomienda =[]
@@ -131,9 +132,9 @@ class Ventana(tk.Tk):
             print("Se resolverá "+ str(self.__cantidadResolver[i].get())+" veces "+ self.__nombreArchivo)
             for j in range(0,self.__cantidadResolver[i].get()):
                 print("RESOLVIENDO ------------------> "+str(self.__nombreArchivo))
-                self.__VCRP = VCRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min",
-                            self.__eSolInicial[i].get(), self.__nroIntercambios[i].get(), self.__eOpt[i].get(), 
-                            self.__boxADD[i].get(), self.__boxDROP[i].get(), self.__eTime[i].get(), self.__optimo[i])
+                self.__VCRP = VCRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__capacidad[i],
+                        self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.__eSolInicial[i].get(),  self.__nroIntercambios[i].get(),
+                        self.__eOpt[i].get(), self.__boxADD[i].get(), self.__boxDROP[i].get(), self.__eTime[i].get(), self.__optimo[i])
                 j
 
     def calcularDatos(self,i):
@@ -185,7 +186,7 @@ class Ventana(tk.Tk):
             self.__frames.append(tk.Frame(self)) 
             self.menuConfig(self.__frames[i],i)
             self.__tabs.add(child=self.__frames[i],text=instancias[i])
-            self.cargarDesdeEUC_2D(self.__mypath+"/"+self.__listaInstancias[i])
+            self.cargarDesdeFile(self.__mypath+"/"+self.__listaInstancias[i])
             self.calcularDatos(i)
             
         self.__tabs.pack(expand=1, fill="both")
@@ -209,8 +210,8 @@ class Ventana(tk.Tk):
         self.tabs(self.__listaInstancias)    
         self.__nombreArchivo = os.path.splitext(os.path.basename(self.__listaInstancias[0]))[0]
     
-    #Convierto mi archivo EUC_2D en una matriz en la cual pueda trabajar
-    def cargarDesdeEUC_2D(self,pathArchivo):
+    #Obtengo los datos de mis archivos .vrp
+    def cargarDesdeFile(self,pathArchivo):
         #+-+-+-+-+-Para cargar la distancias+-+-+-+-+-+-+-+-
         archivo = open(pathArchivo,"r")
         lineas = archivo.readlines()
@@ -225,7 +226,14 @@ class Ventana(tk.Tk):
         
         self.__nroVehiculos.append(int(float(parametros[0])))
         self.__optimo.append(float(parametros[1]))
-        
+
+        #Cargo la capacidad
+        lineaCapacidad = [x for x in lineas[0:indSeccionCoord] if re.search(r"CAPACITY+",x)][0]
+        parametros = re.findall(r"[0-9]+",lineaCapacidad)
+
+        self.__capacidad.append(float(parametros[0]))
+        print("Capacidad: "+str(self.__capacidad))
+
         #Lista donde irán las coordenadas (vertice, x, y)
         coordenadas = []
         #Separa las coordenadas en una matriz, es una lista de listas (vertice, coordA, coordB)
@@ -255,7 +263,6 @@ class Ventana(tk.Tk):
 
         self.__demanda.append(demanda)
 
-        print
         
     def cargaMatrizDistancias(self, coordenadas):
         matriz = []

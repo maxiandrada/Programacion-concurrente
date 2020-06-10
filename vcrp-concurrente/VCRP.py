@@ -12,23 +12,28 @@ from clsTxt import clsTxt
 from time import time
 
 class VCRP:
-    def __init__(self, M: list, D: list, nroTrucks, nombreArchivo, solInicial, nroIntercambios, opt, tenureADD, tenureDROP, tiempoEjec, optimo):
-        self._G = Grafo(M)  #Grafo original
-        self._Demanda = D
-        print("Se cargo el archivo")
-        self.__soluciones = []   #Lista de Grafos que corresponden a las soluciones
-        self.__nroIntercambios=nroIntercambios*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
+    def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
+        self._G = Grafo(M)      #Grafo original
+        self.__Distancias = M 
+        self.__Demanda = D      #Demanda de los clientes
+        self.__capacidad = capac
+        self.__soluciones = []
+        self.__rutas = []   #Lista de nroVehiculos soluciones
+        self.__nroIntercambios=intercamb*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
         self.__opt=opt
         self.__optimo = optimo
-        self.__tenureADD =  tenureADD
-        self.__tenureMaxADD = int(tenureADD*1.7)
-        self.__tenureDROP =  tenureDROP
-        self.__tenureMaxDROP = int(tenureDROP*1.7)
-        self.__txt = clsTxt(str(nombreArchivo))
-        self.__tiempoMaxEjec = float(tiempoEjec)
+        self.__tenureADD =  tADD
+        self.__tenureMaxADD = int(tADD*1.7)
+        self.__tenureDROP =  tDROP
+        self.__tenureMaxDROP = int(tDROP*1.7)
+        #self.__txt = clsTxt(str(nombreArchivo))
+        self.__txt = None
+        self.__tiempoMaxEjec = float(tiempo)
         self.__frecMatriz = []
-        self.__nroTrucks = nroTrucks
+        self.__nroVehiculos = nroV
 
+        print("Se cargo el archivo")
+        #Iniciliza una matriz de frecuencias
         for i in range(0, len(self._G.getMatriz())):
             fila = []
             for j in range(0, len(self._G.getMatriz())):
@@ -36,10 +41,22 @@ class VCRP:
                 j
             self.__frecMatriz.append(fila)
             i
-        print(str(self._G))
-        print("\n"+str(self._Demanda))
         
+        print(str(self._G))
+        for i in range(0, len(self.__Demanda)):
+            print('%i : %s' %(i,str(self.__Demanda[i]))) 
+        
+        print(sum(self.__Demanda))
+        
+        self.rutasIniciales(solI)
+
         #self.tabuSearch(solInicial)
+
+    def rutasIniciales(self, strSolInicial):
+        S = []
+        #for i in range(self.__nroVehiculos):
+        #    S = 
+
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
         masCercano = matrizDist[pos][pos]

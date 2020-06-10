@@ -14,10 +14,8 @@ class Solucion(Grafo):
 
     def __repr__(self):
         return str(self.getV())
-
     def __eq__(self, otro):
         return (self.__costoAsociado == otro.__costoAsociado)
-
     def __ne__(self, otro):
         return (self.__costoAsociado != otro.__costoAsociado)
     def __gt__(self, otro):
@@ -26,10 +24,8 @@ class Solucion(Grafo):
         return self.__costoAsociado < otro.__costoAsociado
     def __ge__(self, otro):
         return self.__costoAsociado >= otro.__costoAsociado
-
     def __le__(self, otro):
         return self.__costoAsociado <= otro.__costoAsociado
-
     def __len__(self):
         return len(self._V)
     
