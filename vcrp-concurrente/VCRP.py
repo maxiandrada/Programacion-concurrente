@@ -11,9 +11,10 @@ import copy
 from clsTxt import clsTxt
 from time import time
 
-class TSP:
-    def __init__(self, M: list, nombreArchivo, solInicial, nroIntercambios, opt, tenureADD, tenureDROP, tiempoEjec, optimo):
+class VCRP:
+    def __init__(self, M: list, D: list, nroTrucks, nombreArchivo, solInicial, nroIntercambios, opt, tenureADD, tenureDROP, tiempoEjec, optimo):
         self._G = Grafo(M)  #Grafo original
+        self._Demanda = D
         print("Se cargo el archivo")
         self.__soluciones = []   #Lista de Grafos que corresponden a las soluciones
         self.__nroIntercambios=nroIntercambios*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
@@ -26,6 +27,8 @@ class TSP:
         self.__txt = clsTxt(str(nombreArchivo))
         self.__tiempoMaxEjec = float(tiempoEjec)
         self.__frecMatriz = []
+        self.__nroTrucks = nroTrucks
+
         for i in range(0, len(self._G.getMatriz())):
             fila = []
             for j in range(0, len(self._G.getMatriz())):
@@ -33,7 +36,10 @@ class TSP:
                 j
             self.__frecMatriz.append(fila)
             i
-        self.tabuSearch(solInicial)
+        print(str(self._G))
+        print("\n"+str(self._Demanda))
+        
+        #self.tabuSearch(solInicial)
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
         masCercano = matrizDist[pos][pos]

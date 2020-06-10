@@ -16,37 +16,61 @@ class Grafo:
 
     def getGrado(self):
         return self._grado
-
     def setA(self, A):
         self._A = A
-
     def setV(self, V):
         self._V = V
-
     def getCostoAsociado(self):
         return self.__costoAsociado
-
     def getA(self):
         return self._A
-
     def getV(self):
         return self._V
-
     def __lt__(self, otro):
-        return (self.__costoAsociado < otro.__costoAsociado)
-
+        return (self.__costoAsociado < otro.__costoAsociado and self.__class__ == otro.__class__)
     def __le__(self, otro):
-        return (self.__costoAsociado <= otro.__costoAsociado)    
-    
+        return (self.__costoAsociado <= otro.__costoAsociado and self.__class__ == otro.__class__)
     def __gt__(self, otro):
-        return (self.__costoAsociado > otro.__costoAsociado)
-
+        return (self.__costoAsociado > otro.__costoAsociado and self.__class__ == otro.__class__)
     def __ge__(self, otro):
-        return (self.__costoAsociado >= otro.__costoAsociado)    
-    
+        return (self.__costoAsociado >= otro.__costoAsociado and self.__class__ == otro.__class__)
     def __eq__(self, other):
         return (self.__class__ == other.__class__ and self.__costoAsociado == other.__costoAsociado)
+    def __ne__(self, other):
+        return (self.__class__ == other.__class__ and self.__costoAsociado != other.__costoAsociado)
 
+    def __str__(self):
+        salida = ""
+        V = self.getV()
+        
+        #Muestra la primera fila con los vertices
+        if(len(self._matrizDistancias) == len(self.getV())):
+            for i in range(0,len(V)):
+                salida += "     " +  str(V[i]) 
+
+            salida = salida + "\n"
+            for i in range(0,len(V)):
+                salida += str(V[i]) + "    "
+                for j in range(0,len(V)):
+                    salida += str(self._matrizDistancias[i][j]) + "    "
+                salida = salida + "\n"
+        else:
+            for i in range(0,len(V)):
+                salida += str(V[i]) + "    "
+
+            salida = salida + "\n"
+            for i in V:
+                salida += str(i) + "    "
+                for j in V:
+                    indice = self.getCostoArista(Arista(i,j,0))
+                    salida += str(self.getA()[indice].getPeso()) + "    "
+                salida = salida + "\n"
+        return salida
+    
+    def __repr__(self):
+        if(self != None):
+            return str(self.getV)
+    
     #Compara entre 2. Se fija si hay aristas de A contenidas en si misma. Si hay aristas, se detiene
     def contieneA(self,A):
         sigue = True
@@ -87,46 +111,7 @@ class Grafo:
         
         print("Aristas: \n",A)
         return A
-    
-    #Nose para que sirve? en q caso se lo utiliza
-    def rellenarAristas(self):
-        A = self._A
-        V = self._V
-        for i in V:
-            for j in V:
-                arista_aux = Arista(i,j,0)
-                if(not(self.contieneA(arista_aux))):
-                    A.append(arista_aux)
 
-    def __str__(self):
-        salida = ""
-        V = self.getV()
-        #Muestra la primera fila con los vertices
-        if(len(self._matrizDistancias) == len(self.getV())):
-            for i in range(0,len(V)):
-                salida += "     " +  str(V[i]) 
-
-            salida = salida + "\n"
-            for i in range(0,len(V)):
-                salida += str(V[i]) + "    "
-                for j in range(0,len(V)):
-                    salida += str(self._matrizDistancias[i][j]) + "    "
-                salida = salida + "\n"
-        else:
-            for i in range(0,len(V)):
-                salida += str(V[i]) + "    "
-
-            salida = salida + "\n"
-            for i in V:
-                salida += str(i) + "    "
-                for j in V:
-                    indice = self.getCostoArista(Arista(i,j,0))
-                    salida += str(self.getA()[indice].getPeso()) + "    "
-                salida = salida + "\n"
-        return salida
-    
-    def __repr__(self):
-        return str(self.getV) 
     def aristasConOrigen(self, V):
         salida = []
         for arista in self.getA():

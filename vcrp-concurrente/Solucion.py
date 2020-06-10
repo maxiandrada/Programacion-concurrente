@@ -3,6 +3,7 @@ from Vertice import Vertice
 from Arista import Arista
 import copy
 import random
+
 class Solucion(Grafo):
     def __init__(self, M):
         super(Solucion, self).__init__(M)
