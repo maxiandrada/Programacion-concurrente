@@ -30,7 +30,7 @@ class Solucion(Grafo):
     def setCosto(self, costo):
         self.__costoAsociado=costo
     
-    def solInicial(self, strSolInicial, length):
+    def solInicial(self, secuenciaInd, capacidad):
         
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):

@@ -67,23 +67,35 @@ class CVRP:
         ini = 0
         fin = length
 
+        #Empezamos con una facil [1,2,3,4,5,...] solucion secuencial
+        secuenciaInd = list(range(0,len(self.__Distancias)))
         S = Solucion(self.__Distancias)
+        
+        if(strSolInicial=="Al azar"):
+            secuenciaInd = secuenciaInd[1:]
+            random.shuffle(secuenciaInd)
+            secuenciaInd = [1]+secuenciaInd
+        if(strSolInicial=="Vecino mas cercano"):
+            pass
+        
         for i in range(self.__nroVehiculos):
-            #Sin contar la vuelta
+            #Sin contar la vuelta (x,1)
             #[(1,2);(2,3);(3,4);(4,1)] - [(1,5);(5,6);(6,7);(7,1)] - [(1,7);(7,8);(8,9);(9,10);(10,1)]
             #length = 3, nroVehiculos = 3
             #i=0    ini = 0, fin = 0+3 -1 = 2
             #i=1    ini = 3, fin = 3+3 -1 = 5
             #i=2    ini = 6, fin = [-1]
-            #i=3    ini = 11
+            #i=3    --> no ingresa al for pero ini = 11
             if (i == self.__nroVehiculos-1):
                 fin = len(self.__Distancias)-1
-            S, ini = S.solInicial(strSolInicial, ini, fin, self.__capacidad)
+            S, ini = S.solInicial(secuenciaInd[ini:fin], self.__capacidad)
             length = self.longitudSoluciones(len(self.__Distancias)-ini, self.__nroVehiculos-i-1)
             fin = ini+length -1
             self.__rutas.append(S)
         if ini <= len(self.__Distancias):
             print("La solucion inicial no es factible. Implementar luego....")
+
+
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
         masCercano = matrizDist[pos][pos]
