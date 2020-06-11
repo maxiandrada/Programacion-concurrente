@@ -30,8 +30,42 @@ class Solucion(Grafo):
     def setCosto(self, costo):
         self.__costoAsociado=costo
     
-    def solInicial(self, secuenciaInd, capacidad):
+    #secuenciaInd: secuencia de Indices
+    #capacidad: capacidad maxima de los vehiculos
+    #demanda: demanda de cada cliente
+    def solInicial(self, secuenciaInd, capacidad, demanda):
+        v_ini = self.getV()[0]
+        v_sig = self.getV()[secuenciaInd[1]]
+        peso = self._matrizDistancias[v_ini.getValue()][v_sig.getValue()]
+        aristaIni = Arista(v_ini, v_sig, peso)
+
+        recorrido = []      #Va a ser una lista de aristas
+        aristasVisitadas = []
+
+        recorrido.append(aristaIni)
+        aristasVisitadas.append([v_ini.getValue(),v_sig.getValue()])
+
+        masCercano=0
+        for i in range(0,len(secuenciaInd)-1):
+            masCercano = self.vecinoMasCercano_cvrp(masCercano, aristasVisitadas, secuenciaInd) #obtiene la posicion en la matriz del vecino mas cercano
+            recorrido.append(Vertice(masCercano+1))
+            visitados.append(masCercano)
+            i
+
+        return recorrido
+
+    def vecinoMasCercano_cvrp(pos, visitads, secuenciaInd):
+        costoMinimo = 999999999
+        ind_costoMinimo = 0
+
+        for e in secuenciaInd:
+            vertSig = e.get
+            costo = self._matrizDistancias[pos][]
+            if(costo<costoMinimo and i not in visitados):
+                costoMinimo = costo
+                ind_costoMinimo = i
         
+        return ind_costoMinimo
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
         masCercano = matrizDist[pos][pos]

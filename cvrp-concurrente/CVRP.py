@@ -14,6 +14,7 @@ from time import time
 class CVRP:
     def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
         self._G = Grafo(M)      #Grafo original
+        self.__S = Solucion(self._G)
         self.__Distancias = M
         self.__Demanda = D      #Demanda de los clientes
         self.__capacidad = capac
@@ -66,11 +67,12 @@ class CVRP:
         length = self.longitudSoluciones(len(self.__Distancias), self.__nroVehiculos)
         ini = 0
         fin = length
+        S = None
 
-        #Empezamos con una facil [1,2,3,4,5,...] solucion secuencial
+        #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [1,2,3,4,5,...] secuencial
         secuenciaInd = list(range(0,len(self.__Distancias)))
-        S = Solucion(self.__Distancias)
-        
+        sub_secuenciaInd = []
+
         if(strSolInicial=="Al azar"):
             secuenciaInd = secuenciaInd[1:]
             random.shuffle(secuenciaInd)
@@ -80,7 +82,7 @@ class CVRP:
         
         for i in range(self.__nroVehiculos):
             #Sin contar la vuelta (x,1)
-            #[(1,2);(2,3);(3,4);(4,1)] - [(1,5);(5,6);(6,7);(7,1)] - [(1,7);(7,8);(8,9);(9,10);(10,1)]
+            #[(1,2);(2,3);(3,4)] - [(1,5);(5,6);(6,7)] - [(1,7);(7,8);(8,9);(9,10)]
             #length = 3, nroVehiculos = 3
             #i=0    ini = 0, fin = 0+3 -1 = 2
             #i=1    ini = 3, fin = 3+3 -1 = 5
@@ -88,7 +90,8 @@ class CVRP:
             #i=3    --> no ingresa al for pero ini = 11
             if (i == self.__nroVehiculos-1):
                 fin = len(self.__Distancias)-1
-            S, ini = S.solInicial(secuenciaInd[ini:fin], self.__capacidad)
+            sub_secuenciaInd = self.__S.solInicial(secuenciaInd[ini:fin], self.__capacidad, self.__Demanda)
+            secuenciaInd = list(set(secuenciaInd)-set(sub_secuenciaInd))
             length = self.longitudSoluciones(len(self.__Distancias)-ini, self.__nroVehiculos-i-1)
             fin = ini+length -1
             self.__rutas.append(S)
