@@ -4,12 +4,13 @@ import sys
 import re
 import math 
 import copy
+import numpy as np
 
 class Grafo:
     def __init__(self, M: list):
-        self._V = []
-        self._A = []
-        self._matrizDistancias = M
+        self._V = np.array([])
+        self._A = np.array([])
+        self._matrizDistancias = np.matrix(M)
         self.__costoAsociado = 0
         self.cargarDesdeMatriz(M)
         self._grado = 0
@@ -235,3 +236,6 @@ class Grafo:
                 jMin
 
         return i,j
+
+if __name__ == "__main__":
+    g = Grafo()

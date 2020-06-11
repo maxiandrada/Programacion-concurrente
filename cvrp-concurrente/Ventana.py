@@ -2,7 +2,7 @@ import tkinter as tk
 import re
 import math
 import time
-from VCRP import VCRP
+from CVRP import CVRP
 from Table import Table
 from Vertice import Vertice
 import tkinter.filedialog
