@@ -9,35 +9,35 @@ class Grafo:
     def __init__(self, M: list):
         self._V = []
         self._A = []
-        self._matrizDistancias = M
-        self.__costoAsociado = 0
-        self.cargarDesdeMatriz(M)
+        self._costoAsociado = 0
         self._grado = 0
-
+        self._matrizDistancias = M
+        self.cargarDesdeMatriz(M)
+        
     def getGrado(self):
         return self._grado
     def setA(self, A):
         self._A = A
     def setV(self, V):
         self._V = V
-    def getCostoAsociado(self):
-        return self.__costoAsociado
     def getA(self):
         return self._A
     def getV(self):
         return self._V
+    def getCostoAsociado(self):
+        return self._costoAsociado
     def __lt__(self, otro):
-        return (self.__costoAsociado < otro.__costoAsociado and self.__class__ == otro.__class__)
+        return (self._costoAsociado < otro.__costoAsociado and self.__class__ == otro.__class__)
     def __le__(self, otro):
-        return (self.__costoAsociado <= otro.__costoAsociado and self.__class__ == otro.__class__)
+        return (self._costoAsociado <= otro.__costoAsociado and self.__class__ == otro.__class__)
     def __gt__(self, otro):
-        return (self.__costoAsociado > otro.__costoAsociado and self.__class__ == otro.__class__)
+        return (self._costoAsociado > otro.__costoAsociado and self.__class__ == otro.__class__)
     def __ge__(self, otro):
-        return (self.__costoAsociado >= otro.__costoAsociado and self.__class__ == otro.__class__)
+        return (self._costoAsociado >= otro.__costoAsociado and self.__class__ == otro.__class__)
     def __eq__(self, other):
-        return (self.__class__ == other.__class__ and self.__costoAsociado == other.__costoAsociado)
+        return (self.__class__ == other.__class__ and self._costoAsociado == other.__costoAsociado)
     def __ne__(self, other):
-        return (self.__class__ == other.__class__ and self.__costoAsociado != other.__costoAsociado)
+        return (self.__class__ == other.__class__ and self._costoAsociado != other.__costoAsociado)
 
     def __str__(self):
         salida = ""
@@ -51,7 +51,10 @@ class Grafo:
             for i in range(0,len(V)):
                 salida += str(V[i]) + "    "
                 for j in range(0,len(V)):
-                    salida += str(self._matrizDistancias[i][j]) + "    "
+                    if(self._matrizDistancias[i][j]==999999999999):
+                        salida += str(0) + "    "
+                    else:
+                        salida += str(self._matrizDistancias[i][j]) + "    "
                 salida = salida + "\n"
         else:
             for i in range(0,len(V)):
@@ -100,6 +103,12 @@ class Grafo:
 
         return minimo
 
+    def cargaVertices(self, secuencia):
+        V = []
+        for x in secuencia:
+            V.append(Vertice(int(x)+1))
+        return V
+
     def cargaAristas(self):
         A=[]
         cantV = len(self._V)
@@ -128,9 +137,9 @@ class Grafo:
     
     #Cargar las aristas
     def cargarDesdeMatriz(self, Matriz):
-        for fila in range(0,len(Matriz)):
-            self._V.append(Vertice(fila+1))    #V = [1,2,3,4,5]; V=[1,3,4] A=[(1,3)(3,4)] => sol 1->3->4->5->2
-        for fila in range(0,len(Matriz)):
+        for fila in range(0, len(Matriz)):
+            self._V.append(Vertice(fila+1))    #V=[1,3,4] A=[(1,3)(3,4)] => sol 1->3->4->5->2
+        for fila in range(0, len(Matriz)):
             for columna in range(0, len(Matriz[fila])):
                 aux = Arista(self._V[fila],self._V[columna],(Matriz[fila][columna]))
                 self._A.append(aux)
@@ -147,6 +156,7 @@ class Grafo:
     #Para que cargue desde una secuencia de vertices por ej. s1= [1,3,4,5,8,9,6,7] -> s2=[1,3,9,5,8,4,6,7]
     def cargarDesdeSecuenciaDeVertices(self,seq:list):
         self._V = seq
+        self._A = []
         rV = [] #Vértices de la matriz ordenados, para obtener la referencia en la matriz de distnacias
         costo = 0
         for j in range(0,len(self.getMatriz())):
@@ -156,7 +166,7 @@ class Grafo:
             dist = self.getMatriz()[rV.index(seq[i])][rV.index(seq[i+1])] #Referencias en la matriz
             self.getA().append(Arista(seq[i], seq[i+1], dist))
             costo+= dist
-        self.__costoAsociado = costo + self.getMatriz()[rV.index(seq[len(seq)-1])][rV.index(seq[0])]
+        self._costoAsociado = costo + self.getMatriz()[rV.index(seq[len(seq)-1])][rV.index(seq[0])]
 
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):

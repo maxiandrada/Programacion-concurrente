@@ -75,7 +75,7 @@ class Ventana(tk.Tk):
         self.__labelSolInicial.append(tk.Label(frame, text = "Solucion inicial"))
         self.__labelSolInicial[i].place(relx=0.2, rely=0.10)
         
-        self.__combo1list=['Vecino mas cercano', 'Al azar']
+        self.__combo1list=['Secuencial','Vecino mas cercano', 'Al azar']
         self.__eSolInicial.append(tk.StringVar())
         self.__combo1.append(ttk.Combobox(frame, textvariable=self.__eSolInicial[i], values=self.__combo1list, width = 29, state = "disabled"))
         self.__combo1[i].place(relx=0.4, rely=0.10)
