@@ -61,19 +61,8 @@ class CVRP:
             print("\nRuta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
         
         print("\nCosto toal: ", self.__costoTotal)
-        #self.tabuSearch(solInicial)
+        #self.tabuSearch(self.__rutas)
 
-    def solucionAlAzar(self):
-        inicio = self._G.getVerticeInicio()
-        indices_azar = random.sample( range(2,len(self._G.getV())+1), len(self._G.getV())-1)
-        
-        alAzar = []
-        alAzar.append(inicio)
-        for i in indices_azar:
-            alAzar.append(Vertice(i))
-
-        return alAzar
- 
     # Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom: list, lista_permitidos: list, recorrido: list):
         indices = []                #Indices de la lista de permitidos para hacer el swapp
@@ -236,8 +225,8 @@ class CVRP:
         else:
             ########Partimos de una solucion al Azar#############
             print("Solucion inicial al azar")
-            solucionAzar = self.solucionAlAzar()
-            g1.cargarDesdeSecuenciaDeVertices(solucionAzar)
+            #solucionAzar = self.solucionAlAzar()
+            #g1.cargarDesdeSecuenciaDeVertices(solucionAzar)
 
         self.__soluciones.append(g1) #Agregar solución inicial
         self.incrementaFrecuencia(g1)

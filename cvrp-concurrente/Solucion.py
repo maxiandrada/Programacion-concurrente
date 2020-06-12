@@ -55,11 +55,11 @@ class Solucion(Grafo):
         secuenciaInd = list(range(0,len(self._matrizDistancias)))
         
 
-        if(strSolInicial=="Azar"):
+        if(strSolInicial=='Al azar'):
             secuenciaInd = secuenciaInd[1:]
             random.shuffle(secuenciaInd)
-            secuenciaInd = [1]+secuenciaInd
-            pass
+            self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
+
         elif(strSolInicial=='Vecino mas cercano'):
             secuenciaInd = self.solInicial_VecinoCercano(nroVehiculos, capacidad, rutas)
             print("secuencia de indices de los vectores: "+str(secuenciaInd))
@@ -72,28 +72,22 @@ class Solucion(Grafo):
         
         return rutas
 
+    #
     def cargar_secuencia(self, secuencia, nroVehiculos, demanda, capacidad, rutas):
-        #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
         secuenciaInd = secuencia
         sub_secuenciaInd = []
         
         for i in range(0,nroVehiculos):
             #Sin contar la vuelta (x,1)
-            #[(1,2);(2,3);(3,4)] - [(1,5);(5,6);(6,7)] - [(1,7);(7,8);(8,9);(9,10)]
-            #length = 3, nroVehiculos = 3
-            #i=0    ini = 0, fin = 0+3 -1 = 2
-            #i=1    ini = 3, fin = 3+3 -1 = 5
-            #i=2    ini = 6, fin = [-1]
-            #i=3    --> no ingresa al for pero ini = 11
+            #nroVehiculos = 3
+            #[1,2,3,4,5,6,7,8,9,10] - [1,2,3,4] - [1,5,6,7] - [1,8,9,10]
             length = self.longitudSoluciones(len(secuenciaInd), nroVehiculos-i)
             fin = length
             sub_secuenciaInd = self.solucion_secuencia(secuenciaInd[0:fin], capacidad, demanda)
-            print("sub secuencia:"+str(sub_secuenciaInd))
             S = Solucion(self._matrizDistancias)
             S.cargarDesdeSecuenciaDeVertices(S.cargaVertices([0]+sub_secuenciaInd))
             rutas.append(S)
             secuenciaInd = [x for x in secuenciaInd if x not in set(sub_secuenciaInd)]
-            print("secuencia:"+str(secuenciaInd))
         if len(secuenciaInd) > 0:
             print("La solucion inicial no es factible. Implementar luego....")
 
@@ -142,40 +136,6 @@ class Solucion(Grafo):
                 sub_secuenciaInd.pop(x)
         return sub_secuenciaInd
     
-    def solInicial_1(self, secuenciaInd, capacidad, demanda):
-        v_ini = self.getV()[0]
-        v_sig = self.getV()[secuenciaInd[1]]
-        peso = self._matrizDistancias[v_ini.getValue()][v_sig.getValue()]
-        aristaIni = Arista(v_ini, v_sig, peso)
-
-        recorrido = []      #Va a ser una lista de aristas
-        aristasVisitadas = []
-
-        recorrido.append(aristaIni)
-        aristasVisitadas.append([v_ini.getValue(),v_sig.getValue()])
-
-        masCercano=0
-        for i in range(0,len(secuenciaInd)-1):
-            masCercano = self.vecinoMasCercano_cvrp(masCercano, aristasVisitadas, secuenciaInd) #obtiene la posicion en la matriz del vecino mas cercano
-            recorrido.append(Vertice(masCercano+1))
-            aristasVisitadas.append(masCercano)
-            i
-
-        return recorrido
-
-    def vecinoMasCercano_cvrp(self, pos, visitados, secuenciaInd):
-        costoMinimo = 999999999
-        ind_costoMinimo = 0
-
-        for e in secuenciaInd:
-            #vertSig = e.get
-            costo = self._matrizDistancias[pos][e]
-            if(costo<costoMinimo and e not in visitados):
-                costoMinimo = costo
-                ind_costoMinimo = e
-        
-        return ind_costoMinimo
-    
     def solucionVecinosCercanos(self):
         inicio = self.getV()[0]
         matrizDist = self.getMatriz()
@@ -193,14 +153,3 @@ class Solucion(Grafo):
             i
 
         return recorrido
-
-    def solucionAlAzar(self):
-        inicio = self.getVerticeInicio()
-        indices_azar = random.sample( range(2,len(self.getV())+1), len(self.getV())-1)
-        
-        alAzar = []
-        alAzar.append(inicio)
-        for i in indices_azar:
-            alAzar.append(Vertice(i))
-
-        return alAzar
