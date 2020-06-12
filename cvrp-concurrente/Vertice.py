@@ -13,6 +13,13 @@ class Vertice():
         return str(self)
     def __eq__(self,otro):
         if(self.__class__ != otro.__class__ ):
-            return (str(self.getValue()) == int(otro))
+            return (int(self.getValue()) == int(otro))
         return (self.__class__ == otro.__class__ and str(self.getValue()) == str(otro.getValue()))
-    
+    def __le__(self,otro):
+        if(self.__class__ != otro.__class__ ):
+            return (int(self.getValue()) <= int(otro))
+        return (self.__class__ == otro.__class__ and str(self.getValue()) <= str(otro.getValue()))
+    def __ge__(self,otro):
+        if(self.__class__ != otro.__class__ ):
+            return (int(self.getValue()) >= int(otro))
+        return (self.__class__ == otro.__class__ and str(self.getValue()) >= str(otro.getValue()))

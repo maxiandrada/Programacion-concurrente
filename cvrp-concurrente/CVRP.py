@@ -21,6 +21,7 @@ class CVRP:
         self.__capacidad = capac
         self.__soluciones = []
         self.__rutas = []   #Solucion general del CVRP
+        self.__costoTotal = 0
         self.__nroIntercambios=intercamb*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
         self.__opt=opt
         self.__optimo = optimo
@@ -47,46 +48,20 @@ class CVRP:
         
         print(str(self._G))
         for i in range(0, len(self.__Demanda)):
-            print('%i : %s' %(i,str(self.__Demanda[i]))) 
+            print('%i : %s' %(i+1,str(self.__Demanda[i]))) 
         
         print(sum(self.__Demanda))
         print(self.__nroVehiculos)
 
         self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidad)
+        for s in self.__rutas:
+            self.__costoTotal += s.getCostoAsociado()
+        
         for i in range(0, len(self.__rutas)):
-            print("ruta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
+            print("\nRuta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
         
+        print("\nCosto toal: ", self.__costoTotal)
         #self.tabuSearch(solInicial)
-
-    def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
-        masCercano = matrizDist[pos][pos]
-        indMasCercano = 0
-    
-        for i in range(0, len(matrizDist)):
-            costo = matrizDist[pos][i]
-            if(costo<masCercano and i not in visitados):
-                masCercano = costo
-                indMasCercano = i
-        
-        return indMasCercano 
-    
-    def solucionVecinosCercanos(self):
-        inicio = self._G.getV()[0]
-        matrizDist = self._G.getMatriz()
-
-        recorrido = []
-        visitados = []
-        
-        recorrido.append(inicio)    #Agrego el vertice inicial
-        visitados.append(0)     #Agrego el vertice inicial
-        masCercano=0
-        for i in range(0,len(matrizDist)-1):
-            masCercano = self.vecinoMasCercano(matrizDist,masCercano, visitados) #obtiene la posicion dela matriz del vecino mas cercano
-            recorrido.append(Vertice(masCercano+1))
-            visitados.append(masCercano)
-            i
-
-        return recorrido
 
     def solucionAlAzar(self):
         inicio = self._G.getVerticeInicio()
@@ -256,8 +231,8 @@ class CVRP:
         if(strSolInicial=="Vecino mas cercano"):
             ########Partimos del vecino mas cercano###########
             print("Soluncion inicial por Vecino mas cercano")
-            vecinosCercanos = self.solucionVecinosCercanos() #Obtiene un vector de vértices
-            g1.cargarDesdeSecuenciaDeVertices(vecinosCercanos) #Carga el recorrido a la solución
+            #vecinosCercanos = self.solucionVecinosCercanos() #Obtiene un vector de vértices
+            #g1.cargarDesdeSecuenciaDeVertices(vecinosCercanos) #Carga el recorrido a la solución
         else:
             ########Partimos de una solucion al Azar#############
             print("Solucion inicial al azar")
