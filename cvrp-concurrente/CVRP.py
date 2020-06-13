@@ -54,14 +54,22 @@ class CVRP:
         print(self.__nroVehiculos)
 
         self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidad)
+        A = []
+        V = []
         for s in self.__rutas:
             self.__costoTotal += s.getCostoAsociado()
-        
+            A.extend(s.getA())
+            V.extend(s.getV())
         for i in range(0, len(self.__rutas)):
             print("\nRuta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
         
-        print("\nCosto toal: ", self.__costoTotal)
-        #self.tabuSearch(self.__rutas)
+        self._S.setA(A)
+        self._S.setV(V)
+        self._S.setCosto(self.__costoTotal)
+        print("\nVertices general: ", str(V))
+        print("\nSolucion general: ", str(self._S))
+
+        #self.tabuSearch(self._S)
 
     # Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom: list, lista_permitidos: list, recorrido: list):
@@ -210,9 +218,15 @@ class CVRP:
         self.decrementaTenure(lista_tabu)
 
         return lista_tabu
+    
+    
+    ####### Empezamos con Tabu Search #########
+    def tabuSearch(self, rutasIniciales):
+        lista_tabu = []
+
 
     ####### Empezamos con Tabu Search #########
-    def tabuSearch(self, strSolInicial):
+    def tabuSearch_1(self, strSolInicial):
         lista_tabu = []     #Tiene objetos de la clase Tabu
         lista_permit = []   #Tiene objetos del tipo vertice      
         g1 = self._G.copyVacio()  #La primera solucion corresponde a g1

@@ -53,11 +53,9 @@ class Solucion(Grafo):
 
         #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
         secuenciaInd = list(range(0,len(self._matrizDistancias)))
-        
 
         if(strSolInicial=='Al azar'):
-            secuenciaInd = secuenciaInd[1:]
-            random.shuffle(secuenciaInd)
+            secuenciaInd = random.sample( range(1,len(self.getV())), len(self.getV())-1)
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
 
         elif(strSolInicial=='Vecino mas cercano'):
@@ -126,14 +124,14 @@ class Solucion(Grafo):
     def solucion_secuencia(self, secuenciaInd, capacidad, demanda):
         tam = 0                 #Tamaño de la solInicial, depende si la suma de las demandas cumple la restriccion de capacidad
         acum_demanda = 0
-        sub_secuenciaInd = secuenciaInd
+        sub_secuenciaInd = []
         for x in secuenciaInd:
             value = self.getV()[x].getValue()-1
             if(acum_demanda + demanda[value] <= capacidad):
                 acum_demanda += demanda[value]
+                sub_secuenciaInd.append(x)
                 tam+=1
-            else:
-                sub_secuenciaInd.pop(x)
+        
         return sub_secuenciaInd
     
     def solucionVecinosCercanos(self):
