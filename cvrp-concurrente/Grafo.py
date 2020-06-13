@@ -12,7 +12,8 @@ class Grafo:
         self._costoAsociado = 0
         self._grado = 0
         self._matrizDistancias = M
-        self.cargarDesdeMatriz(M)
+        if(M!=[]):
+            self.cargarDesdeMatriz(M)
         
     def getGrado(self):
         return self._grado
@@ -177,12 +178,6 @@ class Grafo:
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
             self.getA()[x].incFrecuencia()
-
-    def copy(self):
-        G = Grafo(self.getMatriz())
-        G.setA(copy.deepcopy(self.getA()))
-        G.setV(copy.deepcopy(self.getV()))
-        return G
 
     def swapp(self, v1, v2):
         copiaV = copy.deepcopy(self._V)
