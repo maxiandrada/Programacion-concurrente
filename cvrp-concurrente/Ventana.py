@@ -2,8 +2,8 @@ import tkinter as tk
 import re
 import math
 import time
-from VCRP import VCRP
-from Table import Table
+from CVRP import CVRP
+#from Table import Table
 from Vertice import Vertice
 import tkinter.filedialog
 import os
@@ -16,7 +16,7 @@ class Ventana(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
         self.geometry("370x410+350+150")
-        self.title("Buqueda tabu aplicada a VCRP")
+        self.title("Buqueda tabu aplicada a CVRP")
         self.__matrizDistancias=[]
         self.__demanda = []
         self.__nro = 0
@@ -93,9 +93,9 @@ class Ventana(tk.Tk):
 
     def cargarDatos(self):
         if(self.__eTime.get()!=''):
-            self.__vcrp = VCRP(self.__matrizDistancias, self.__nombreArchivo+"_"+str(self.__eTime.get())+"min",
+            self.__cvrp = CVRP(self.__matrizDistancias, self.__nombreArchivo+"_"+str(self.__eTime.get())+"min",
                             self.__eSolInicial.get(), self.__nroIntercambios.get(), self.__eOpt.get(), 
-                            self.__boxADD.get(), self.__boxDROP.get(), self.__eTime.get(), self.__optimo)
+                            self.__boxADD.get(), self.__boxDROP.get(), self.__eTime.get(), self.__optimo,1,2,3)
             
             if(self.__openFolder):
                 for inst in self.__listaInstancias[1:]:
@@ -105,9 +105,9 @@ class Ventana(tk.Tk):
                     time_aux = self.__eTime.get()
                     self.calcularDatos()
                     self.__eTime.set(time_aux)
-                    self.__vcrp = VCRP(self.__matrizDistancias, self.__nombreArchivo+"_"+str(self.__eTime.get())+"min", 
+                    self.__cvrp = CVRP(self.__matrizDistancias, self.__nombreArchivo+"_"+str(self.__eTime.get())+"min", 
                             self.__eSolInicial.get(), self.__nroIntercambios.get(), self.__eOpt.get(), 
-                            self.__boxADD.get(), self.__boxDROP.get(), self.__eTime.get(), self.__optimo)
+                            self.__boxADD.get(), self.__boxDROP.get(), self.__eTime.get(), self.__optimo,1,2,3)
 
         else:
             print("No se permite valores vacios")

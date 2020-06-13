@@ -135,21 +135,3 @@ class Solucion(Grafo):
                 tam+=1
         
         return sub_secuenciaInd
-    
-    def solucionVecinosCercanos(self):
-        inicio = self.getV()[0]
-        matrizDist = self.getMatriz()
-
-        recorrido = []
-        visitados = []
-        
-        recorrido.append(inicio)    #Agrego el vertice inicial
-        visitados.append(0)     #Agrego el vertice inicial
-        masCercano=0
-        for i in range(0,len(matrizDist)-1):
-            #masCercano = self.vecinoMasCercano(matrizDist,masCercano, visitados) #obtiene la posicion dela matriz del vecino mas cercano
-            recorrido.append(Vertice(masCercano+1))
-            visitados.append(masCercano)
-            i
-
-        return recorrido

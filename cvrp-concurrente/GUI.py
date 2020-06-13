@@ -75,7 +75,7 @@ class Ventana(tk.Tk):
         self.__labelSolInicial.append(tk.Label(frame, text = "Solucion inicial"))
         self.__labelSolInicial[i].place(relx=0.2, rely=0.10)
         
-        self.__combo1list=['Secuencial','Vecino mas cercano', 'Al azar']
+        self.__combo1list=['Al azar','Vecino mas cercano','Secuencial']
         self.__eSolInicial.append(tk.StringVar())
         self.__combo1.append(ttk.Combobox(frame, textvariable=self.__eSolInicial[i], values=self.__combo1list, width = 29, state = "disabled"))
         self.__combo1[i].place(relx=0.4, rely=0.10)
@@ -133,9 +133,12 @@ class Ventana(tk.Tk):
             for j in range(0,self.__cantidadResolver[i].get()):
                 print("RESOLVIENDO ------------------> "+str(self.__nombreArchivo))
                 self.__cvrp = CVRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__capacidad[i],
-                        self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.__eSolInicial[i].get(),  self.__nroIntercambios[i].get(),
+                        self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.getSolucionInicial(self.__eSolInicial[i].get()),  self.__nroIntercambios[i].get(),
                         self.__eOpt[i].get(), self.__boxADD[i].get(), self.__boxDROP[i].get(), self.__eTime[i].get(), self.__optimo[i])
                 j
+
+    def getSolucionInicial(self,value):
+        return self.__combo1list.index(value)
 
     def calcularDatos(self,i):
         if(self.__openFolder):
