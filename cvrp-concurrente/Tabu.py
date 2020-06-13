@@ -16,8 +16,8 @@ class Tabu:
     def getTenure(self):
         return self.__tenure
 
-    #def __eq__(self,E):
-    #    return (self.getElemento() == E.getElemento())
+    def __eq__(self,E):
+        return (self.getElemento() == E.getElemento())
 
     def __str__(self):
         return "("+str(self.__elemento)+","+str(self.__tenure)+")"  

@@ -38,7 +38,10 @@ class Arista():
         return (V == self.getDestino())
 
     def __eq__(self, A):
-        return ((self.getOrigen() == A.getOrigen()) & (self.getDestino() == A.getDestino()) & (self.getPeso() == A.getPeso()))
+        return ((self.__class__ == A.__class__) & (self.getOrigen() == A.getOrigen()) & (self.getDestino() == A.getDestino()) & (self.getPeso() == A.getPeso()))
+
+    def __ne__(self, A):
+        return((self.__class__ == A.__class__) & (self.getOrigen() != A.getOrigen()) & (self.getDestino() != A.getDestino()))
 
     def __str__(self):
         return "(" + str(self._origen) + "," + str(self._destino) + "," + str(self._peso) + ")"

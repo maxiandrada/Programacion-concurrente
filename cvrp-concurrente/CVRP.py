@@ -71,52 +71,65 @@ class CVRP:
         self.tabuSearch()
 
     # Para el Tabu Search Granular
-    def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos):
+    def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos, lista_permitidosSol):
         indices = []                #Indices de la lista de permitidos para hacer el swapp
-        aristas_permitidas = []     #Lista de permitidos como enteros que corresponden a las aristas
-        aristas_solucion = []     #La solucion como una lista de enteros que corresponden a las aristas
+        aristas_permitidas = []     #Lista de permitidos como enteros que corresponden a las aristas = lista_permitidos
+        aristas_solucion = []       #La solucion como una lista de enteros que corresponden a las aristas
         
-        for A in self._S.getA():
+        for A in lista_permitidosSol:
             origen = int(A.getOrigen().getValue())
             destino = int(A.getDestino().getValue())
             peso = A.getPeso()
             aristas_solucion.append([origen, destino, peso])
-        print("aristas recorridas: "+str(aristas_solucion))
-
+        print("\naristas solucion: "+str(aristas_solucion))
+        
+        aristas_permitidasRandom = []
+        for x in indicesRandom:
+            aristas_permitidasRandom.append(aristas_solucion[x])
+        print("aristas permitidas random: "+str(aristas_permitidasRandom))
+        
         for A in lista_permitidos:
             origen = int(A.getOrigen().getValue())
             destino = int(A.getDestino().getValue())
             peso = A.getPeso()
             aristas_permitidas.append([origen, destino, peso])
+        print("aristas permitidas: "+str(aristas_permitidas))
         
-        aristas_permitidasRandom = []
-        for x in indicesRandom:
-            aristas_permitidasRandom.append(aristas_permitidas[x])
-        print("aristas permitidas random: "+str(aristas_permitidasRandom))
+        aristas_restantes = [x for x in aristas_permitidas if x not in aristas_permitidasRandom and x not in aristas_solucion]
+        print("aristas permitidas restantes: "+str(aristas_restantes))    
         
-        a_permitidas = [x for x in aristas_permitidas if x not in aristas_permitidasRandom]
-        print("aristas permitidas new: "+str(aristas_permitidas))
-
         #[(1,2);(2,3);(3,4);(1,9);(9,5);(5,6);(1,7);(7,8);(8,10)]
         #2-opt:
-        #[(1,2);(2,5);(5,4);(1,9);(9,3);(3,6);(1,7);(7,8);(8,10)]
+        #ADD = (2,5) y DROP = (2,3) --> [(1,2);(2,5);(5,4);(1,9);(9,3);(3,6);(1,7);(7,8);(8,10)]
         #[(1,2);(2,5);(5,4);(1,3);(3,9);(9,6);(1,7);(7,8);(8,10)]
         #3-opt:
-        #Antes: [1,2,3,4,1,9,5,6,1,7,8,10] -> [1,2,7,4,1,3,5,6,1,9,8,10]
-        #[(1,2);(2,5);(5,4);(1,9);(9,3);(3,6);(1,7);(7,8);(8,10)]
+        #ADD = [(2,7),[1,3],[1,9]] y DROP = [(2,3),(1,7)]
+        #Antes: [1,2,3,4,1,9,5,6,1,7,8,10] ->(3,9,7) [1,2,7,4,1,3,5,6,1,9,8,10]
+        #[(1,2);(2,7);(7,4);(1,3);(3,5);(5,6);(1,9);(9,8);(8,10)]
         #[(1,2);(2,5);(5,4);(1,3);(3,9);(9,6);(1,7);(7,8);(8,10)]
-        
         for i in indicesRandom:
-            indices.append(i)
-            ind = self.vecinoMasCercano(aristas_permitidas[i], permitidos, aristas_permitidas, valores_recorrido)
+            indices.append(aristas_permitidas.index(aristas_solucion[i]))
+            ind = self.vecinoMasCercano(aristas_solucion[i], aristas_restantes, aristas_permitidas)
             indices.append(ind)
-            if(permitidos!=[]):
-                permitidos.remove(aristas_permitidas[ind])
-
+            if(aristas_restantes!=[]):
+                print("arista add: "+str(aristas_permitidas[ind]))
+                aristas_restantes.remove(aristas_permitidas[ind])
+        
         return indices
 
-    def vecinoMasCercano(self, arista_permitida, )
+    def vecinoMasCercano(self, arista_seleccionada, aristas_restantes, aristas_permitidas):
+        masCercano = 999999999999
+        indMasCercano = 0
+        lista_aristas = [x for x in aristas_restantes if x[0]==arista_seleccionada[0]]
 
+        print("\narista drop: "+str(arista_seleccionada))
+        for A in lista_aristas:
+            costo = A[2]
+            if(costo < masCercano or len(lista_aristas)==1):
+                masCercano = costo
+                indMasCercano = aristas_permitidas.index(A)
+
+        return indMasCercano
     
     def vecinosMasCercanosTSG_1(self, indicesRandom: list, lista_permitidos: list, recorrido: list):
         indices = []                #Indices de la lista de permitidos para hacer el swapp
@@ -270,7 +283,6 @@ class CVRP:
     def tabuSearch(self):
         lista_tabu = []         #Tiene objetos de la clase Tabu
         lista_permitidos = []   #Tiene objetos de la clase arista
-        Sol_Actual = self._S.getCopyVacio()
         Sol_Actual = self._S
         
         #Atributos banderas utilizados
@@ -291,13 +303,8 @@ class CVRP:
         if(tiempoMaxNoMejora > tiempoMax/4):
             tiempoMaxNoMejora = float(tiempoMax/4)  #La 1/5 parte del tiempo, en caso de que los 1min sea demasiado
         
-        print("Tiempo maximo: "+str(int(tiempoMax/60))+"min "+str(int(tiempoMax%60))+"seg")
-        print("Tiempo maximo estancamiento: "+str(int(tiempoMaxNoMejora/60))+"min "+str(int(tiempoMaxNoMejora%60))+"seg")
-        print("Optimo real: "+str(self.__optimo))
-        print("Solucion inicial: "+str(self._S.getCostoAsociado()))
-        
-        while(tiempoEjecuc <= tiempoMax):
-            lista_permitidos = self.getPermitidos(lista_tabu)    #Lista de elementos que no son tabu
+        while(tiempoEjecuc <= tiempoMax and iterac<=2):
+            lista_permitidos, lista_permitidosSol = self.getPermitidos(lista_tabu)    #Lista de elementos que no son tabu
             print("Lista de permitidos: "+str(lista_permitidos))
             ADD = []
             DROP = []
@@ -310,25 +317,43 @@ class CVRP:
                     nroIntercambios=len(lista_permitidos)
                     if(nroIntercambios%2!=0):
                         nroIntercambios-=1                    
-                ind_random = random.sample(range(0,len(lista_permitidos)),int(nroIntercambios/2))
-                ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos)
+                
+                #+-+-+-+-+-+-+-+- Tabu Search Granular +-+-+-+-+-+-+-+-+-#
+                if(cond_3opt):
+                    #3-opt
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),1)
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                    ind_aux = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                    ind_random.append(ind_aux[-1])
+                elif(cond_4opt):
+                    #4-opt
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),2)
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                else:
+                    #2-opt    
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),int(nroIntercambios/2))
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                
+                #Crea los elementos ADD y DROP
+                for i in range(0,len(ind_random)):
+                    if(i%2!=0): #Los impares para ADD y los pares para DROP
+                        ADD.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureADD))
+                        print("ADD: "+str(ADD))
+                    else:
+                        DROP.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureDROP))
+                        print("DROP: "+str(DROP))
             else:
                 print("No hay vertices disponibles para el intercambio. Elimina vertices de la lista Tabu")
                 self.borraFrecuentados(lista_tabu)
             
-            #self.decrementaTenure(lista_tabu)   #Decremento el tenure y elimino algunos elementos con tenure igual a 0
+            self.decrementaTenure(lista_tabu)   #Decremento el tenure y elimino algunos elementos con tenure igual a 0
             
             #Agrego los nuevos vertices a la lista tabu o decremento el tiempo de iteracion de TS_Frecuencia
-            if(not condTS_Frecuencia):
-                lista_tabu.extend(ADD)
-                lista_tabu.extend(DROP)
-            
-            condTS_Frecuencia = False
-            
+            lista_tabu.extend(ADD)
+            lista_tabu.extend(DROP)
             lista_permitidos = []
             iterac += 1
             tiempoEjecuc = time()-tiempoIni
-            tiempoMax = 0
         #+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
         #Fin del while. Imprimo la solucion optima y algunos atributos
         tiempoFin = time()
@@ -336,6 +361,7 @@ class CVRP:
 
     def getPermitidos(self, lista_tabu: list):
         ListaPermit = []
+        ListaPermit_Sol = []
         Aristas = []
         for EP in self._G.getA():
             if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1):
@@ -343,20 +369,25 @@ class CVRP:
         
         if(len(lista_tabu) == 0):
             ListaPermit = Aristas
+            ListaPermit_Sol = self._S.getA()[:-1]
+            print("[-1]: "+str(self._S.getA()[-1]))
         else:
             for EP in Aristas:
                 cond = True
                 for ET in lista_tabu:
-                    if(EP == ET):
+                    if(EP == ET.getElemento()):
                         cond = False
                         break
                 if(cond):
                     ListaPermit.append(EP)
-        
-        return ListaPermit
+                    pertS = any(x == EP for x in self._S.getA())
+                    if(pertS):
+                        ListaPermit_Sol.append(EP)
+            print("Lista de permitidos: "+str(ListaPermit))
+            print("Lista tabu: "+str(lista_tabu))
+            print("Lista permitidos solucion: "+str(ListaPermit_Sol))
 
-
-
+        return ListaPermit, ListaPermit_Sol
 
     ####### Empezamos con Tabu Search #########
     def tabuSearch_1(self, strSolInicial):
@@ -607,7 +638,7 @@ class CVRP:
     #Decrementa el Tenure en caso de que no sea igual a -1. Si luego de decrementar es 0, lo elimino de la lista tabu
     def decrementaTenure(self, lista_tabu: list):
         i=0
-        while (i <len(lista_tabu)):
+        while (i < len(lista_tabu)):
             elemTabu=lista_tabu[i]
             if(elemTabu.getTenure()!=-1):
                 elemTabu.decrementaT()

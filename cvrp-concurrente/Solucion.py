@@ -13,8 +13,7 @@ class Solucion(Grafo):
     def __str__(self):
         ult_vert = self.getV()[-1]
         ult_arista = Arista(ult_vert, self.getV()[0], self._matrizDistancias[0][ult_vert.getValue()-1])
-        A = self.getA()
-        A.append(ult_arista)
+        A = self.getA()+[ult_arista]
         return "Recorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(A) + " \nCosto Asociado: " + str(round(self.getCostoAsociado(),3))
     def __repr__(self):
         return str(self.getV())
