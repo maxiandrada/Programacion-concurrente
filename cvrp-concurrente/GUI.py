@@ -265,8 +265,7 @@ class Ventana(tk.Tk):
             demanda.append(float(splitLinea[1]))
 
         self.__demanda.append(demanda)
-
-        
+    
     def cargaMatrizDistancias(self, coordenadas):
         matriz = []
         #Arma la matriz de distancias. Calculo la distancia euclidea

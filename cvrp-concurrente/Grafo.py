@@ -45,20 +45,26 @@ class Grafo:
         #Muestra la primera fila con los vertices
         if(len(self._matrizDistancias) == len(self.getV())):
             for i in range(0,len(V)):
-                salida += "     " +  str(V[i]) 
+                if(V[i]>=10):
+                    salida += "        " +  str(V[i])
+                else:
+                    salida += "        " +  str(V[i]) + " "
 
             salida = salida + "\n"
             for i in range(0,len(V)):
-                salida += str(V[i]) + "    "
+                if(V[i] >= 10):
+                    salida += str(V[i]) + "    "
+                else:
+                    salida += str(V[i]) + "     "
                 for j in range(0,len(V)):
                     if(self._matrizDistancias[i][j]==999999999999):
-                        salida += str(0) + "    "
+                        salida += str(0) + "         "
                     else:
                         salida += str(self._matrizDistancias[i][j]) + "    "
                 salida = salida + "\n"
         else:
             for i in range(0,len(V)):
-                salida += str(V[i]) + "    "
+                salida += str(V[i]) + "         "
 
             salida = salida + "\n"
             for i in V:
@@ -171,11 +177,6 @@ class Grafo:
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
             self.getA()[x].incFrecuencia()
-
-    def copyVacio(self):
-        ret = Grafo([])
-        ret.setMatriz(self.getMatriz())
-        return ret
 
     def copy(self):
         G = Grafo(self.getMatriz())

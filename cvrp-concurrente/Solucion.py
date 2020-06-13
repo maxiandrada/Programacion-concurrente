@@ -15,7 +15,7 @@ class Solucion(Grafo):
         ult_arista = Arista(ult_vert, self.getV()[0], self._matrizDistancias[0][ult_vert.getValue()-1])
         A = self.getA()
         A.append(ult_arista)
-        return "Recorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(A) + " \nCosto Asociado: " + str(self.getCostoAsociado())
+        return "Recorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(A) + " \nCosto Asociado: " + str(round(self.getCostoAsociado(),3))
     def __repr__(self):
         return str(self.getV())
     def __eq__(self, otro):
@@ -50,6 +50,7 @@ class Solucion(Grafo):
     #Rutas iniciales o la primera solucion
     def rutasIniciales(self, strSolInicial, nroVehiculos, demanda, capacidad):
         rutas = []
+
 
         #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
         secuenciaInd = list(range(0,len(self._matrizDistancias)))
