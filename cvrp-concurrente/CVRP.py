@@ -68,7 +68,7 @@ class CVRP:
         self._S.setCosto(self.__costoTotal)
         print("\nSolucion general: ", str(self._S))
         
-        self.tabuSearch()
+        #self.tabuSearch()
 
     # Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom: list, lista_permitidos: list, recorrido: list):
@@ -353,7 +353,33 @@ class CVRP:
         #Fin del while. Imprimo la solucion optima y algunos atributos
         tiempoFin = time()
         tiempoTotal = tiempoFin - tiempoIni
-            
+
+    def pertenListaTabu(self, lista_tabu: list):
+        ListaPermit = []
+        CopyAristas = copy.deepcopy(self._G.getA())
+        cantAristas = len(copy.deepcopy(self._G.getV()))
+        if(len(lista_tabu) == 0):
+            ListaPermit = CopyAristas
+        else:
+            for i in range(0, cantAristas):
+                EP = CopyAristas[i]      #EP: Elemento Permitido
+                j = 0
+                cond = True
+                while(j < len(lista_tabu) and cond):
+                    ET = lista_tabu[j].getElemento()    #ET: Elemento Tabu
+                    if(EP == ET):
+                        cond = False
+                    j+=1
+                if(cond):
+                    ListaPermit.append(EP)
+        
+        ListaPermit.pop(0) #Eliminamos el vertice inicial, el 1
+        
+        return ListaPermit
+
+
+
+
     ####### Empezamos con Tabu Search #########
     def tabuSearch_1(self, strSolInicial):
         lista_tabu = []     #Tiene objetos de la clase Tabu
@@ -577,7 +603,7 @@ class CVRP:
         print("Tiempo total: " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg\n")
 
     #Devuelve una lista con los vertices que no pertenecen a la lista tabu
-    def pertenListaTabu(self, lista_tabu: list):
+    def pertenListaTabu_1(self, lista_tabu: list):
         ListaPermit = []
         CopyAristas = copy.deepcopy(self._S.getA())
         cantVert = len(copy.deepcopy(self._G.getV()))
