@@ -55,17 +55,17 @@ class Solucion(Grafo):
         secuenciaInd = list(range(0,len(self._matrizDistancias)))
         
 
-        if(strSolInicial=="Azar"):
-            secuenciaInd = secuenciaInd[1:]
-            random.shuffle(secuenciaInd)
-            secuenciaInd = [1]+secuenciaInd
-            pass
-        elif(strSolInicial=='Vecino mas cercano'):
+
+        if(strSolInicial==0): #Solución al Azar
+            random.shuffle(secuenciaInd[1:])
+            self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
+
+        elif(strSolInicial==1): #Solución Vecino Cercano
             secuenciaInd = self.solInicial_VecinoCercano(nroVehiculos, demanda, capacidad, rutas)
             secuenciaInd = secuenciaInd[1:]
             print("secuencia de vectores: "+str(secuenciaInd))
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
-        else:
+        elif(strSolInicial==2):
             secuenciaInd = list(range(1,len(self._matrizDistancias)))
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
         return rutas
@@ -86,10 +86,11 @@ class Solucion(Grafo):
             length = self.longitudSoluciones(len(secuenciaInd), nroVehiculos-i)
             fin = length
             sub_secuenciaInd = self.solucion_secuencia(secuenciaInd[0:fin], capacidad, demanda)
+            print(sub_secuenciaInd)
             S = Solucion(self._matrizDistancias)
             S.cargarDesdeSecuenciaDeVertices(S.cargaVertices([0]+sub_secuenciaInd))
             rutas.append(S)
-            secuenciaInd = list(set(secuenciaInd)-set(sub_secuenciaInd))
+            secuenciaInd = [x for x in secuenciaInd if x not in set(sub_secuenciaInd)]
         if len(secuenciaInd) > 0:
             print("La solucion inicial no es factible. Implementar luego....")
 

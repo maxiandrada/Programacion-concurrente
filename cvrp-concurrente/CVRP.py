@@ -10,7 +10,7 @@ import math
 import copy
 from clsTxt import clsTxt
 from time import time
-
+from Ingreso import Ingreso 
 class CVRP:
     def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
         self._G = Grafo(M)      #Grafo original
@@ -53,9 +53,11 @@ class CVRP:
         print(self.__nroVehiculos)
 
         self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidad)
+        self.__costoTotal = 0
         for i in range(0, len(self.__rutas)):
+            self.__costoTotal += self.__rutas[i].getCostoAsociado()
             print("ruta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
-        
+        print("Costo total: "+str(self.__costoTotal))
         #self.tabuSearch(solInicial)
 
     def vecinoMasCercano(self, matrizDist: list, pos: int, visitados: list):
@@ -504,3 +506,8 @@ class CVRP:
                 lista_tabu.pop(i)
                 i-=1
             i+=1
+
+
+if __name__ == "__main__":
+    ingreso = Ingreso(sys.argv)
+    cvrp = CVRP(*ingreso.controlArgumentos())
