@@ -51,14 +51,9 @@ class Solucion(Grafo):
     def rutasIniciales(self, strSolInicial, nroVehiculos, demanda, capacidad):
         rutas = []
 
-
-        #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
-        secuenciaInd = list(range(0,len(self._matrizDistancias)))
         
-
-
         if(strSolInicial==0): #Solución al Azar
-            random.shuffle(secuenciaInd[1:])
+            secuenciaInd = random.sample( range(1,len(self.getV())), len(self.getV())-1)
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
 
         elif(strSolInicial==1): #Solución Vecino Cercano
