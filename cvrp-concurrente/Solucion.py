@@ -35,6 +35,11 @@ class Solucion(Grafo):
     def setCosto(self, costo):
         self._costoAsociado=costo
     
+    def getCopyVacio(self):
+        ret = Solucion(Grafo([]))
+        ret.setMatriz(self.getMatriz())
+        return ret
+
     #Longitud que debería tener cada solucion por cada vehiculo
     def longitudSoluciones(self, length, nroVehiculos):
         if(nroVehiculos == 0):
@@ -50,9 +55,6 @@ class Solucion(Grafo):
     #Rutas iniciales o la primera solucion
     def rutasIniciales(self, strSolInicial, nroVehiculos, demanda, capacidad):
         rutas = []
-
-        #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
-        secuenciaInd = list(range(0,len(self._matrizDistancias)))
 
         if(strSolInicial=='Al azar'):
             secuenciaInd = random.sample( range(1,len(self.getV())), len(self.getV())-1)

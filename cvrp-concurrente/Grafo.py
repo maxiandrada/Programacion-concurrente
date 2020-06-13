@@ -178,11 +178,6 @@ class Grafo:
         for x in range(0,len(self.getA())):
             self.getA()[x].incFrecuencia()
 
-    def copyVacio(self):
-        ret = Grafo([])
-        ret.setMatriz(self.getMatriz())
-        return ret
-
     def copy(self):
         G = Grafo(self.getMatriz())
         G.setA(copy.deepcopy(self.getA()))
