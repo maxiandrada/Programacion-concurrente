@@ -81,22 +81,22 @@ class CVRP:
             destino = int(A.getDestino().getValue())
             peso = A.getPeso()
             aristas_solucion.append([origen, destino, peso])
-        print("\naristas solucion: "+str(aristas_solucion))
+        #print("\naristas solucion: "+str(aristas_solucion))
         
         aristas_permitidasRandom = []
         for x in indicesRandom:
             aristas_permitidasRandom.append(aristas_solucion[x])
-        print("aristas permitidas random: "+str(aristas_permitidasRandom))
+        #print("aristas permitidas random: "+str(aristas_permitidasRandom))
         
         for A in lista_permitidos:
             origen = int(A.getOrigen().getValue())
             destino = int(A.getDestino().getValue())
             peso = A.getPeso()
             aristas_permitidas.append([origen, destino, peso])
-        print("aristas permitidas: "+str(aristas_permitidas))
+        #print("aristas permitidas: "+str(aristas_permitidas))
         
         aristas_restantes = [x for x in aristas_permitidas if x not in aristas_permitidasRandom and x not in aristas_solucion]
-        print("aristas permitidas restantes: "+str(aristas_restantes))    
+        #print("aristas permitidas restantes: "+str(aristas_restantes))    
         
         #[(1,2);(2,3);(3,4);(1,9);(9,5);(5,6);(1,7);(7,8);(8,10)]
         #2-opt:
@@ -112,7 +112,7 @@ class CVRP:
             ind = self.vecinoMasCercano(aristas_solucion[i], aristas_restantes, aristas_permitidas)
             indices.append(ind)
             if(aristas_restantes!=[]):
-                print("arista add: "+str(aristas_permitidas[ind]))
+                #print("arista ADD: "+str(aristas_permitidas[ind]))
                 aristas_restantes.remove(aristas_permitidas[ind])
         
         return indices
@@ -122,7 +122,7 @@ class CVRP:
         indMasCercano = 0
         lista_aristas = [x for x in aristas_restantes if x[0]==arista_seleccionada[0]]
 
-        print("\narista drop: "+str(arista_seleccionada))
+        #print("\narista DROP: "+str(arista_seleccionada))
         for A in lista_aristas:
             costo = A[2]
             if(costo < masCercano or len(lista_aristas)==1):
@@ -283,7 +283,7 @@ class CVRP:
     def tabuSearch(self):
         lista_tabu = []         #Tiene objetos de la clase Tabu
         lista_permitidos = []   #Tiene objetos de la clase arista
-        Sol_Actual = self._S
+        Sol_Actual = copy.deepcopy(self._S)
         
         #Atributos banderas utilizados
         condOptim = False   #En caso de que encontre uno mejor que el optimo lo guardo en el archivo txt
@@ -338,10 +338,24 @@ class CVRP:
                 for i in range(0,len(ind_random)):
                     if(i%2!=0): #Los impares para ADD y los pares para DROP
                         ADD.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureADD))
-                        print("ADD: "+str(ADD))
                     else:
                         DROP.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureDROP))
-                        print("DROP: "+str(DROP))
+                print("ADD: "+str(ADD))
+                print("DROP: "+str(DROP))
+
+                #Realiza el intercambio de los vertices seleccionados
+                if(cond_3opt):
+                    #3-opt
+                    Sol_Actual = Sol_Actual.swap_3opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento())
+                elif(cond_4opt):
+                    #4-opt v2
+                    Sol_Actual = Sol_Actual.swap_4opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento(), DROP[1].getElemento())
+                else:
+                    #2-opt y 4-opt v1
+                    for i in range(0,len(ADD)):
+                        Sol_Actual = Sol_Actual.swapp(ADD[i].getElemento(), DROP[i].getElemento())
+                
+
             else:
                 print("No hay vertices disponibles para el intercambio. Elimina vertices de la lista Tabu")
                 self.borraFrecuentados(lista_tabu)
@@ -351,6 +365,8 @@ class CVRP:
             #Agrego los nuevos vertices a la lista tabu o decremento el tiempo de iteracion de TS_Frecuencia
             lista_tabu.extend(ADD)
             lista_tabu.extend(DROP)
+            print("Lista tabu: "+str(lista_tabu))
+            
             lista_permitidos = []
             iterac += 1
             tiempoEjecuc = time()-tiempoIni
@@ -383,9 +399,9 @@ class CVRP:
                     pertS = any(x == EP for x in self._S.getA())
                     if(pertS):
                         ListaPermit_Sol.append(EP)
-            print("Lista de permitidos: "+str(ListaPermit))
-            print("Lista tabu: "+str(lista_tabu))
-            print("Lista permitidos solucion: "+str(ListaPermit_Sol))
+            #print("Lista de permitidos: "+str(ListaPermit))
+            #print("Lista tabu: "+str(lista_tabu))
+            #print("Lista permitidos solucion: "+str(ListaPermit_Sol))
 
         return ListaPermit, ListaPermit_Sol
 

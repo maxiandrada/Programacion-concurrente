@@ -134,3 +134,46 @@ class Solucion(Grafo):
                 tam+=1
         
         return sub_secuenciaInd
+
+    #[(1,2);(2,3);(3,4);(1,9);(9,5);(5,6);(1,7);(7,8);(8,10)]
+    #2-opt:
+    #DROP = (2,3); ADD = (2,5) --> [(1,2);(2,5);(5,4);(1,9);(9,3);(3,6);(1,7);(7,8);(8,10)]
+    #[(1,2);(2,5);(5,4);(1,3);(3,9);(9,6);(1,7);(7,8);(8,10)]
+    def swap(self, a1, a2):
+        A = []
+        V = self.getV()[0]
+        for a in self._A:
+            print("a: "+str(a))
+            a1_Destino = a1.getDestino()
+            a2_Destino = a2.getDestino()
+            if(a.getOrigen == a1_Destino):
+                a.setOrigen(a1_Destino)
+            elif(a.getOrigen == a2_Destino):
+                a.setOrigen(a2_Destino)
+            
+            if (a.getDestino() == a1_Destino):
+                a.setDestino(a1_Destino)
+            elif(a.getDestino() == a2_Destino):
+                a.setDestino(a2_Destino)
+            print(str(a))
+            A.append(a)
+            V.append(a.getDestino())
+        
+        S = Solucion([])
+        S.setA(A)
+        S.setV(V)
+        S.setMatriz(self._matrizDistancias)
+
+        return S
+    
+    def swapp(self, v1, v2):
+        copiaV = copy.deepcopy(self._V)
+
+        copiaV[self._V.index(v1)]=v2
+        copiaV[self._V.index(v2)]=v1
+
+        gNuevo = Grafo([])
+        gNuevo.setMatriz(self.getMatriz())
+        gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
+        return gNuevo
+
