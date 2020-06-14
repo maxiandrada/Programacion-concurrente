@@ -68,7 +68,7 @@ class CVRP:
         self._S.setCosto(self.__costoTotal)
         print("\nSolucion general: ", str(self._S))
         
-        self.tabuSearch()
+        #self.tabuSearch()
 
     # Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos, lista_permitidosSol):
