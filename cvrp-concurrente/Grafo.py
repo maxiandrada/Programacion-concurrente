@@ -179,17 +179,6 @@ class Grafo:
         for x in range(0,len(self.getA())):
             self.getA()[x].incFrecuencia()
 
-    def swapp(self, v1, v2):
-        copiaV = copy.deepcopy(self._V)
-
-        copiaV[self._V.index(v1)]=v2
-        copiaV[self._V.index(v2)]=v1
-
-        gNuevo = Grafo([])
-        gNuevo.setMatriz(self.getMatriz())
-        gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
-        return gNuevo
-
     def swap_3opt(self, v1, v2, v3):
         copiaV = copy.deepcopy(self._V)
 
