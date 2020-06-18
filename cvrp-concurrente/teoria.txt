@@ -1,0 +1,18 @@
+El grafo dispero contiene a aquellas aristas cuya distancia no supere el umbral
+A partir de esas aristas elegimos una para hacer nuestro swap
+
+Movimientos opt
+Solucion: 1-2-3-4-5  1-6-7-8-9-10    1-11-12-13-14-15
+
+2-opt: (3,6) 
+1-2-3-6-7-8-9-10   1-4-5   1-11-12-13-14-15
+
+otra version
+1-2-3-6-4-5     1-7-8-9-10      1-11-12-13-14-15
+
+otra version
+1-2-3-6-5       1-4-7-8-9-10    1-11-12-13-14-15
+
+
+
+3-opt: ()

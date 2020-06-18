@@ -7,14 +7,18 @@ import random
 import math
 
 class Solucion(Grafo):
-    def __init__(self, M):
+    def __init__(self, M, sumDemanda):
         super(Solucion, self).__init__(M)
-    
+        self.__capacidad = 0
+        self.__demandaTotal = sumDemanda
+
     def __str__(self):
         ult_vert = self.getV()[-1]
         ult_arista = Arista(ult_vert, self.getV()[0], self._matrizDistancias[0][ult_vert.getValue()-1])
         A = self.getA()+[ult_arista]
-        return "Recorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(A) + " \nCosto Asociado: " + str(round(self.getCostoAsociado(),3))
+        cad = "\nRecorrido de la solución: " + str(self.getV()) + "\n" + "Aristas de la solución: "+ str(A)
+        cad += "\nCosto Asociado: " + str(round(self.getCostoAsociado(),3)) + "        Capacidad: "+ str(self.__capacidad)
+        return cad
     def __repr__(self):
         return str(self.getV())
     def __eq__(self, otro):
@@ -32,10 +36,16 @@ class Solucion(Grafo):
     def __len__(self):
         return len(self._V)
     def setCosto(self, costo):
-        self._costoAsociado=costo
-    
+        self._costoAsociado = costo
+    def setDemandaTotal(self, demanda):
+        self.__demandaTotal = demanda
+    def setCapacidad(self, capacidad):
+        self.__capacidad = capacidad
+    def getCapacidad(self):
+        return self.__capacidad
+
     def getCopyVacio(self):
-        ret = Solucion(Grafo([]))
+        ret = Solucion(Grafo([]), 0)
         ret.setMatriz(self.getMatriz())
         return ret
 
@@ -55,18 +65,15 @@ class Solucion(Grafo):
     def rutasIniciales(self, strSolInicial, nroVehiculos, demanda, capacidad):
         rutas = []
 
-        if(strSolInicial=='Al azar'):
-            secuenciaInd = random.sample( range(1,len(self.getV())), len(self.getV())-1)
+        if(strSolInicial==0):
+            secuenciaInd = random.sample(range(1,len(self.getV())) , len(self.getV())-1)
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
-
-        elif(strSolInicial=='Vecino mas cercano'):
-            secuenciaInd = self.solInicial_VecinoCercano(nroVehiculos, capacidad, rutas)
-            print("secuencia de indices de los vectores: "+str(secuenciaInd))
-            secuenciaInd = secuenciaInd[1:]
-            self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
+            print("secuencia de indices de los vectores (random): "+str(secuenciaInd))
+        elif(strSolInicial==1):
+            self.solInicial_VecinoCercano(nroVehiculos, capacidad, demanda, rutas)
         else:
             secuenciaInd = list(range(1,len(self._matrizDistancias)))
-            print("secuencia de indices de los vectores: "+str(secuenciaInd))
+            print("secuencia de indices de los vectores (secuencial): "+str(secuenciaInd))
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
         
         return rutas
@@ -79,51 +86,20 @@ class Solucion(Grafo):
         for i in range(0,nroVehiculos):
             #Sin contar la vuelta (x,1)
             #nroVehiculos = 3
-            #[1,2,3,4,5,6,7,8,9,10] - [1,2,3,4] - [1,5,6,7] - [1,8,9,10]
-            length = self.longitudSoluciones(len(secuenciaInd), nroVehiculos-i)
-            fin = length
-            sub_secuenciaInd = self.solucion_secuencia(secuenciaInd[0:fin], capacidad, demanda)
-            S = Solucion(self._matrizDistancias)
+            #[1,2,3,4,5,6,7,8,9,10] Lo ideal seria: [1,2,3,4] - [1,5,6,7] - [1,8,9,10]
+            sub_secuenciaInd = self.solucion_secuencia(secuenciaInd, capacidad, demanda, nroVehiculos)
+            S = Solucion(self._matrizDistancias, self.__demandaTotal)
             S.cargarDesdeSecuenciaDeVertices(S.cargaVertices([0]+sub_secuenciaInd))
             rutas.append(S)
             secuenciaInd = [x for x in secuenciaInd if x not in set(sub_secuenciaInd)]
+            i
         if len(secuenciaInd) > 0:
             print("La solucion inicial no es factible. Implementar luego....")
-
-    def solInicial_VecinoCercano(self, nroVehiculos, capacidad, rutas):
-        #Secuencias de indices(entero) para luego asignar una solucion. Empezamos con una facil [0.1,2,3,4,5,...] secuencial
-        recorrido = []
-        visitados = []
-        
-        recorrido.append(0)    #Agrego el indice del vertice inicial
-        visitados.append(0)    #Agrego el vertice inicial
-        masCercano=0
-        for i in range(0,len(self._matrizDistancias)-1):
-            masCercano = self.vecinoMasCercano(masCercano, visitados) #obtiene la posicion dela matriz del vecino mas cercano
-            recorrido.append(masCercano)
-            visitados.append(masCercano)
-            i
-        
-        print("recorrido: "+str(recorrido))
-        return recorrido
-
-    def vecinoMasCercano(self, pos, visitados):
-        masCercano = self._matrizDistancias[pos][pos]
-        indMasCercano = 0
-    
-        for i in range(0, len(self._matrizDistancias)):
-            costo = self._matrizDistancias[pos][i]
-            if(costo<masCercano and i not in visitados):
-                masCercano = costo
-                indMasCercano = i
-        
-        return indMasCercano 
 
     #secuenciaInd: secuencia de Indices
     #capacidad: capacidad maxima de los vehiculos
     #demanda: demanda de cada cliente
-    def solucion_secuencia(self, secuenciaInd, capacidad, demanda):
-        tam = 0                 #Tamaño de la solInicial, depende si la suma de las demandas cumple la restriccion de capacidad
+    def solucion_secuencia(self, secuenciaInd, capacidad, demanda, nroVehiculos):
         acum_demanda = 0
         sub_secuenciaInd = []
         for x in secuenciaInd:
@@ -131,9 +107,48 @@ class Solucion(Grafo):
             if(acum_demanda + demanda[value] <= capacidad):
                 acum_demanda += demanda[value]
                 sub_secuenciaInd.append(x)
-                tam+=1
+                if (acum_demanda > self.__demandaTotal/nroVehiculos):
+                    break
         
         return sub_secuenciaInd
+
+    def solInicial_VecinoCercano(self, nroVehiculos, capacidad, demanda, rutas):
+        visitados = []
+        recorrido = []
+        visitados.append(0)    #Agrego el vertice inicial
+        
+        for j in range(0, nroVehiculos):
+            recorrido = []
+            masCercano=0
+            acum_demanda = 0
+            for i in range(0,len(self._matrizDistancias)-len(visitados)):
+                masCercano = self.vecinoMasCercano(masCercano, visitados, acum_demanda, demanda, capacidad) #obtiene la posicion dela matriz del vecino mas cercano
+                if(masCercano != 0):
+                    acum_demanda += demanda[masCercano]
+                    recorrido.append(masCercano)
+                    visitados.append(masCercano)
+                if(acum_demanda > self.__demandaTotal/nroVehiculos):
+                    break
+                i
+            j
+            S = Solucion(self._matrizDistancias, self.__demandaTotal)
+            S.cargarDesdeSecuenciaDeVertices(S.cargaVertices([0]+recorrido))
+            S.setCapacidad(acum_demanda)
+            rutas.append(S)
+        
+        return recorrido
+
+    def vecinoMasCercano(self, pos, visitados, acum_demanda, demanda, capacidad):
+        masCercano = self._matrizDistancias[pos][pos]
+        indMasCercano = 0
+    
+        for i in range(0, len(self._matrizDistancias)):
+            costo = self._matrizDistancias[pos][i]
+            if(costo<masCercano and i not in visitados and demanda[i]+acum_demanda <= capacidad):
+                masCercano = costo
+                indMasCercano = i
+        
+        return indMasCercano
 
     #[(1,2);(2,3);(3,4);(1,9);(9,5);(5,6);(1,7);(7,8);(8,10)]
     #2-opt:
@@ -159,7 +174,7 @@ class Solucion(Grafo):
             A.append(a)
             V.append(a.getDestino())
         
-        S = Solucion([])
+        S = Solucion([], self.__demandaTotal)
         S.setA(A)
         S.setV(V)
         S.setMatriz(self._matrizDistancias)
