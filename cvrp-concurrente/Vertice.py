@@ -1,13 +1,19 @@
 class Vertice():
 
-    def __init__(self,V):
+    def __init__(self,V, D):
         self._value = V
+        self._demanda = D
 
     def getValue(self):
         return self._value
     def setValue(self, V):
         self._value = V
+    def setDemanda(self, D):
+        self._demanda = D
+    def getDemanda(self):
+        return self._demanda
     def __str__(self):
+        #return "("+str(self._value)+","+str(self._demanda)+")"
         return str(self._value)
     def __repr__(self):
         return str(self)

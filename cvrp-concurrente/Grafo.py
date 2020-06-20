@@ -6,19 +6,34 @@ import math
 import copy
 
 class Grafo:
-    def __init__(self, M: list):
+    def __init__(self, M, D):
         self._V = []
         self._A = []
         self._costoAsociado = 0
         self._grado = 0
         self._matrizDistancias = M
-        if(M!=[]):
-            self.cargarDesdeMatriz(M)
+        self._demanda = D
+        if(M!=[] and D!=[]):
+            self.cargarDesdeMatriz(M, D)
         
     def getGrado(self):
         return self._grado
+    def cargaDesdeAristas(self, A):
+        self._A = A
+        V = []
+        cap = 0
+        for v in A:
+            V.append(v.getOrigen())
+            cap += self._demanda[v.getOrigen().getValue()-1]
+        self._V = V
+        return cap
+
     def setA(self, A):
         self._A = A
+        V = []
+        for v in A:
+            V.append(v.getOrigen())
+        self._V = V
     def setV(self, V):
         self._V = V
     def getA(self):
@@ -113,7 +128,7 @@ class Grafo:
     def cargaVertices(self, secuencia):
         V = []
         for x in secuencia:
-            V.append(Vertice(int(x)+1))
+            V.append(Vertice(int(x)+1, self._demanda[x]))
         return V
 
     def cargaAristas(self):
@@ -127,6 +142,11 @@ class Grafo:
         print("Aristas: \n",A)
         return A
 
+    def aristaConOrigen(self, V):
+        for i in range(0, len(self._A)):
+            if (self._A[i].tieneOrigen(V)):
+                return i
+
     def aristasConOrigen(self, V):
         salida = []
         for arista in self.getA():
@@ -134,6 +154,11 @@ class Grafo:
                 salida.append(arista)
 
         return salida
+
+    def aristaConDestino(self, V):
+        for i in range(0, len(self._A)):
+            if (self._A[i].tieneDestino(V)):
+                return i
 
     def aristasConDestino(self, V):
         salida = []
@@ -143,9 +168,9 @@ class Grafo:
         return salida
     
     #Cargar las aristas
-    def cargarDesdeMatriz(self, Matriz):
+    def cargarDesdeMatriz(self, Matriz, Demanda):
         for fila in range(0, len(Matriz)):
-            self._V.append(Vertice(fila+1))    #V=[1,3,4] A=[(1,3)(3,4)] => sol 1->3->4->5->2
+            self._V.append(Vertice(fila+1, Demanda[fila]))    #V=[1,3,4] A=[(1,3)(3,4)] => sol 1->3->4->5->2
         for fila in range(0, len(Matriz)):
             for columna in range(0, len(Matriz[fila])):
                 aux = Arista(self._V[fila],self._V[columna],(Matriz[fila][columna]))
@@ -164,16 +189,17 @@ class Grafo:
     def cargarDesdeSecuenciaDeVertices(self,seq:list):
         self._V = seq
         self._A = []
-        rV = [] #Vértices de la matriz ordenados, para obtener la referencia en la matriz de distnacias
         costo = 0
-        for j in range(0,len(self.getMatriz())):
-            rV.append(Vertice(j+1))
         
-        for i in range(0,len(seq)-1):
-            dist = self.getMatriz()[rV.index(seq[i])][rV.index(seq[i+1])] #Referencias en la matriz
-            self.getA().append(Arista(seq[i], seq[i+1], dist))
-            costo+= dist
-        self._costoAsociado = costo + self.getMatriz()[rV.index(seq[len(seq)-1])][rV.index(seq[0])]
+        for i in range(0,len(seq)):
+            if(i< len(seq)-1):
+                dist = self.getMatriz()[seq[i].getValue()-1][seq[i+1].getValue()-1] #Referencias en la matriz
+                self.getA().append(Arista(seq[i], seq[i+1], dist))
+            else:
+                dist = self.getMatriz()[seq[i].getValue()-1][0]
+                self.getA().append(Arista(seq[i], seq[0], dist))
+            costo+=dist
+        self._costoAsociado = costo
 
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
@@ -186,7 +212,7 @@ class Grafo:
         copiaV[self._V.index(v2)]=v3    
         copiaV[self._V.index(v3)]=v1    
 
-        gNuevo = Grafo([])
+        gNuevo = Grafo([],[])
         gNuevo.setMatriz(self.getMatriz())
         gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
         return gNuevo
@@ -201,32 +227,7 @@ class Grafo:
         copiaV[self._V.index(v3)]=v4    #[2,3,4,4]
         copiaV[self._V.index(v4)]=v1    #[2,3,4,1]
 
-        gNuevo = Grafo([])
+        gNuevo = Grafo([],[])
         gNuevo.setMatriz(self.getMatriz())
         gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
         return gNuevo
-
-    def mejoresIndices(self, solucion, lista_permit):
-        mayorVerticeOrigen = 0
-        iMin = 0
-        for i in range(0,len(solucion)):
-            origen = solucion[i].getValue()-1
-            destino = solucion[i+1].getValue()-1
-            dist = self.getMatriz()[origen][destino]
-            
-            #Busca la peor arista
-            if(dist > mayorVerticeOrigen and (origen in lista_permit) and (destino in lista_permit)): 
-                minimo = self.getMatriz()[origen][0]
-                filaVertice = self.getMatriz()[origen]
-                jMin = 0
-                #Busca el mejor destino para la arista encontrada, asegurándose de que no esté en la lista Tabú
-                for j in range(0,len(filaVertice)):
-                    if(filaVertice[j]<minimo and Vertice(j+1) in lista_permit):
-                        minimo = dist
-                        jMin = j
-                iMin = i
-                
-                iMin
-                jMin
-
-        return i,j

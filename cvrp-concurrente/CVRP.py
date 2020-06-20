@@ -13,12 +13,12 @@ from time import time
 
 class CVRP:
     def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
-        self._G = Grafo(M)      #Grafo original
+        self._G = Grafo(M, D)      #Grafo original
         print(len(M))
-        self._S = Solucion(M, sum(D))
+        self._S = Solucion(M, D, sum(D))
         self.__Distancias = M
         self.__Demanda = D      #Demanda de los clientes
-        self.__capacidad = capac
+        self.__capacidadMax = capac
         self.__soluciones = []
         self.__rutas = []   #Solucion general del CVRP
         self.__costoTotal = 0
@@ -53,7 +53,7 @@ class CVRP:
         print(sum(self.__Demanda))
         print(self.__nroVehiculos)
 
-        self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidad)
+        self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidadMax)
         self.cargaSolucion()
         
         print("\nSolucion general:" + str(self._S))
@@ -69,12 +69,16 @@ class CVRP:
             A.extend(s.getA())
             V.extend(s.getV())
         for i in range(0, len(self.__rutas)):
-            print("\nRuta del vehiculo "+str(i+1)+":"+str(self.__rutas[i]))
-        
+            print("\nRuta del vehiculo "+str(i+1)+":")
+            print("Recorrido: "+str(self.__rutas[i].getV()))
+            print("Aristas: "+str(self.__rutas[i].getA()))
+            print("Costo asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad total: "+str(self.__rutas[i].getDemandaTotal()))
+
         self._S.setA(A)
         self._S.setV(V)
         self._S.setCosto(self.__costoTotal)
         self._S.setCapacidad(cap)
+        self._S.setCapacidadMax(self.__capacidadMax)
 
     #Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos, lista_permitidosSol):
@@ -283,6 +287,9 @@ class CVRP:
 
         return lista_tabu
     
+    
+
+
     #Umbral de granularidad: phi = Beta*(c/(n+k))
     #Beta = 1
     #c = valor de una sol. inicial
@@ -300,93 +307,48 @@ class CVRP:
         lista_tabu = []             #Tiene objetos de la clase Tabu
         lista_permitidos = []       #(Grafo Disperso)Tiene elementos del tipo Arista que no estan en la lista tabu y su distancia es menor al umbral
         lista_permitidosSol = []
-        umbral = self.calculaUmbral()
-
+        nueva_solucion = None
+        cond_2opt = True
         cond_3opt = False
         cond_4opt = False
 
+        umbral = self.calculaUmbral()
+
         iterac = 1
         
+        solucion_actual = copy.deepcopy(self._S)
+
         while(iterac<=2):
             lista_permitidos = self.getPermitidos(lista_tabu, umbral)    #Lista de elementos que no son tabu
             print("Lista de permitidos: "+str(lista_permitidos))
             ADD = []
             DROP = []
             
-            ind_random = random.sample(range(0,len(lista_permitidosSol)),int(nroIntercambios/2))
+            ind_random = [x for x in range(0,len(lista_permitidos))]
+            random.shuffle(ind_random)
             
+            if(cond_2opt):
+                solucion_actual.swap_2opt(lista_permitidos, ind_random, self.__rutas, self.__Demanda)
 
-            #Verifico si hay vertices disponibles suficientes para el intercambio
-            if(len(lista_permitidos)>=4):
-                #+-+-+-+-+-+-+-+- Tabu Search Granular +-+-+-+-+-+-+-+-+-#
-                if(cond_3opt):
-                    #3-opt
-                    ind_random = random.sample(range(0,len(lista_permitidosSol)),1)
-                    #nro_solucion = 
-                    #ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                    #ind_aux = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                    #ind_random.append(ind_aux[-1])
-                elif(cond_4opt):
-                    #4-opt
-                    ind_random = random.sample(range(0,len(lista_permitidosSol)),2)
-                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                else:
-                    #2-opt    
-                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                
-                #Crea los elementos ADD y DROP
-                for i in range(0,len(ind_random)):
-                    if(i%2!=0): #Los impares para ADD y los pares para DROP
-                        ADD.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureADD))
-                    else:
-                        DROP.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureDROP))
-                print("ADD: "+str(ADD))
-                print("DROP: "+str(DROP))
-
-                #Realiza el intercambio de los vertices seleccionados
-                #if(cond_3opt):
-                    #3-opt
-                #    Sol_Actual = Sol_Actual.swap_3opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento())
-                #elif(cond_4opt):
-                    #4-opt v2
-                #    Sol_Actual = Sol_Actual.swap_4opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento(), DROP[1].getElemento())
-                #else:
-                    #2-opt y 4-opt v1
-                #    for i in range(0,len(ADD)):
-                #        Sol_Actual = Sol_Actual.swapp(ADD[i].getElemento(), DROP[i].getElemento())
-                
-
-            else:
-                print("No hay vertices disponibles para el intercambio. Elimina vertices de la lista Tabu")
-                self.borraFrecuentados(lista_tabu)
-            
-            self.decrementaTenure(lista_tabu)   #Decremento el tenure y elimino algunos elementos con tenure igual a 0
-            
-            #Agrego los nuevos vertices a la lista tabu o decremento el tiempo de iteracion de TS_Frecuencia
-            lista_tabu.extend(ADD)
-            lista_tabu.extend(DROP)
-            print("Lista tabu: "+str(lista_tabu))
-            
-            lista_permitidos = []
             iterac += 1
         
     def getPermitidos(self, lista_tabu, umbral):
         ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
-        ListaPermit_Sol = []       #Aristas permitidas de la solucion actual
         Aristas = []
 
-        #No tengo en consideracion a las aristas del tipo (v1,v1, dist) y (v1,1, dist)
+        print("Umbral: ",umbral)
+        #No tengo en consideracion a las aristas del tipo (v1,v1, dist), (v1,1, dist), (1,v2,dist), las que exceden el umbral
+        # y las que pertencen a S
         for EP in self._G.getA():
-            if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1):
+            pertS = any(x == EP for x in self._S.getA())
+            if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1 and not pertS and EP.getPeso() <= umbral):
                 Aristas.append(EP)
         
         #La lista tabu esta vacia, entonces la lista de permitidas tiene todas las aristas anteriores
         if(len(lista_tabu) == 0):
             ListaPermit = Aristas
-            ListaPermit_Sol = self._S.getA()[:-1]
-            print("[-1]: "+str(self._S.getA()[-1]))
         
-        #La lista tabu tiene elementos, realizo la diferencia con la lista de aristas anteriores
+        #La lista tabu tiene elementos, agrego los que no estan en lista tabu
         else:
             for EP in Aristas:
                 cond = True
@@ -396,16 +358,11 @@ class CVRP:
                         break
                 if(cond):
                     ListaPermit.append(EP)
-                    pertS = any(x == EP for x in self._S.getA())
-                    if(pertS):
-                        ListaPermit_Sol.append(EP)
             #print("Lista de permitidos: "+str(ListaPermit))
             #print("Lista tabu: "+str(lista_tabu))
-            #print("Lista permitidos solucion: "+str(ListaPermit_Sol))
+            #print("Lista permitidos solucion: "+str(ListaPermit_Sol))        
 
-        #Controlo cuales se encuentran por debajo del umbral
-
-        return ListaPermit, ListaPermit_Sol
+        return ListaPermit
 
     ####### Empezamos con Tabu Search #########
     def tabuSearch_1(self, strSolInicial):
