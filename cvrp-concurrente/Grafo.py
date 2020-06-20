@@ -22,10 +22,13 @@ class Grafo:
         self._A = A
         V = []
         cap = 0
+        costo = 0
         for v in A:
             V.append(v.getOrigen())
+            costo += v.getPeso()
             cap += self._demanda[v.getOrigen().getValue()-1]
         self._V = V
+        self._costoAsociado = costo
         return cap
 
     def setA(self, A):
@@ -190,6 +193,7 @@ class Grafo:
         self._V = seq
         self._A = []
         costo = 0
+        cap = 0
         
         for i in range(0,len(seq)):
             if(i< len(seq)-1):
@@ -199,35 +203,11 @@ class Grafo:
                 dist = self.getMatriz()[seq[i].getValue()-1][0]
                 self.getA().append(Arista(seq[i], seq[0], dist))
             costo+=dist
+            cap += seq[i].getDemanda()
         self._costoAsociado = costo
+
+        return cap
 
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
             self.getA()[x].incFrecuencia()
-
-    def swap_3opt(self, v1, v2, v3):
-        copiaV = copy.deepcopy(self._V)
-
-        copiaV[self._V.index(v1)]=v2    
-        copiaV[self._V.index(v2)]=v3    
-        copiaV[self._V.index(v3)]=v1    
-
-        gNuevo = Grafo([],[])
-        gNuevo.setMatriz(self.getMatriz())
-        gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
-        return gNuevo
-
-    def swap_4opt(self, v1, v2, v3, v4):
-        copiaV = copy.deepcopy(self._V)
-
-        #[1,2,3,4]  -> 2opt: [2,1,4,3]
-        #[1,2,3,4]  -> 4opt: [2,3,4,1]
-        copiaV[self._V.index(v1)]=v2    #[2,2,3,4]
-        copiaV[self._V.index(v2)]=v3    #[2,3,3,4]
-        copiaV[self._V.index(v3)]=v4    #[2,3,4,4]
-        copiaV[self._V.index(v4)]=v1    #[2,3,4,1]
-
-        gNuevo = Grafo([],[])
-        gNuevo.setMatriz(self.getMatriz())
-        gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
-        return gNuevo
