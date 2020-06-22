@@ -149,8 +149,8 @@ class Ventana(tk.Tk):
         self.__labelRecomienda.append(tk.Label(text = "Se recomienda los siguientes valores..."))
         self.__labelRecomienda[i].place(relx=0.3,rely=0.05)        
         
-        tenureADD = int(len(self.__matrizDistancias[i])*0.1)
-        tenureDROP = int(len(self.__matrizDistancias[i])*0.1)+1
+        tenureADD = int(len(self.__matrizDistancias[i])**(1/2.0))
+        tenureDROP = int(len(self.__matrizDistancias[i])**(1/2.0))+1
 
         self.__combo1[i].configure(state = "readonly")
         self.__combo1[i].set('Vecino mas cercano')

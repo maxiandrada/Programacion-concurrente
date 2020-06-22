@@ -79,11 +79,17 @@ Sol: 1-2-a-3-4   1-5-b-6-7-8
 =>  (a,3) que ahora es (7,3) y (a,b)
     (5,b) y (7,8) que ahora es (5,8)
 
+5ta opcion:    1-2-a-3-4-b-5-6-7
+(a,b)          1-2-a-b-3-4-5-6-7
+=>  ADD     DROP
+    (a,b)   (4,b)
+    (4,5)   (5,b)
+    (b,3)   (a,3)
 .
 .
 .
 Dato de color: en una iteracion se podria evaluar todas(o casi todas) estas posibilidades q correspondan a las rutas
-involucradas en este movimiento
+involucradas en este movimiento. Si se aplica en la misma ruta y hay una sola arista intermedia, se aplica 2-opt
 
 (7,15)
 Sol: 1-2-3-4-5      1-6-7-8-9-10        1-11-12-13-14-15

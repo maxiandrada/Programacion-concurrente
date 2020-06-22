@@ -15,11 +15,10 @@ class CVRP:
     def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
         self._G = Grafo(M, D)       #Grafo original
         print(len(M))
-        self._S = Solucion(M, D, sum(D))    #Solucion general del CVRP
+        self.__S = Solucion(M, D, sum(D))    #Solucion general del CVRP
         self.__Distancias = M
         self.__Demandas = D         #Demandas de los clientes
         self.__capacidadMax = capac #Capacidad max por vehiculo
-        self.__soluciones = []
         self.__rutas = []           #Soluciones por vehiculo
         self.__costoTotal = 0
         self.__nroVehiculos = nroV
@@ -36,7 +35,8 @@ class CVRP:
         self.__txt = None
         self.__tiempoMaxEjec = float(tiempo)
         self.__frecMatriz = []
-        
+        self.__soluciones = []
+
         #Iniciliza una matriz de frecuencias
         for i in range(0, len(self._G.getMatriz())):
             fila = []
@@ -53,10 +53,10 @@ class CVRP:
         print("SumDemanda: ",sum(self.__Demandas))
         print("Nro vehiculos: ",self.__nroVehiculos)
 
-        self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demandas, self.__capacidadMax)
-        self._S = self.cargaSolucion(self.__rutas)
+        self.__rutas = self.__S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demandas, self.__capacidadMax)
+        self.__S = self.cargaSolucion(self.__rutas)
         
-        print("\nSolucion general:" + str(self._S))
+        print("\nSolucion general:" + str(self.__S))
         self.tabuSearch()
 
     def cargaSolucion(self, rutas):
@@ -70,12 +70,6 @@ class CVRP:
             cap += s.getCapacidad()
             A.extend(s.getA())
             V.extend(s.getV())
-        for i in range(0, len(rutas)):
-            print("\nRuta del vehiculo "+str(i+1)+":")
-            print("Recorrido: "+str(rutas[i].getV()))
-            print("Aristas: "+str(rutas[i].getA()))
-            print("Costo asociado: "+str(rutas[i].getCostoAsociado())+"      Capacidad total: "+str(rutas[i].getCapacidad()))
-
         S.setA(A)
         S.setV(V)
         S.setCosto(costoTotal)
@@ -292,15 +286,14 @@ class CVRP:
         return lista_tabu
     
     
-
-
     #Umbral de granularidad: phi = Beta*(c/(n+k))
-    #Beta = 1
+    #Beta = 1   parametro de dispersion. Sirve para modificar el grafo disperso para incluir la diversificación y la intensificación
+    #           durante la búsqueda.
     #c = valor de una sol. inicial
     #k = nro de vehiculos
     #n = nro de clientes
     def calculaUmbral(self):
-        c = self._S.getCostoAsociado()
+        c = self.__S.getCostoAsociado()
         k = self.__nroVehiculos
         n = len(self.__Distancias)-1
         phi = c/(n+k)
@@ -312,19 +305,26 @@ class CVRP:
         lista_permitidos = []       #(Grafo Disperso)Tiene elementos del tipo Arista que no estan en la lista tabu y su distancia es menor al umbral
         nuevas_rutas = []
         nueva_solucion = None
-        cond_2opt = True
-        cond_3opt = False
+        cond_2opt = False
+        cond_3opt = True
         cond_4opt = False
         
         umbral = self.calculaUmbral()
             
         iterac = 1
         
-        solucion_actual = copy.deepcopy(self._S)
+        solucion_actual = copy.deepcopy(self.__S)
+        sol_ini = str(self.__S)
+        for i in range(0, len(self.__rutas)):
+            sol_ini+="\nRuta del vehiculo "+str(i+1)+":"
+            sol_ini+="\nRecorrido: "+str(self.__rutas[i].getV())
+            sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
+            sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad total: "+str(self.__rutas[i].getCapacidad())
 
-        while(iterac<=40):
+        while(iterac<=60):
+            print("\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Iteracion %d  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n" %(iterac))
             lista_permitidos = self.getPermitidos(lista_tabu, umbral)    #Lista de elementos que no son tabu
-            print("Lista de permitidos: "+str(lista_permitidos))
+            #print("Lista de permitidos: "+str(lista_permitidos))
             print("Lista tabu: "+str(lista_tabu))
             ADD = []
             DROP = []
@@ -334,20 +334,31 @@ class CVRP:
             
             if(cond_2opt):
                 nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_2opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
-                nueva_solucion = self.cargaSolucion(nuevas_rutas)
-                print("Costo nueva sol: "+str(nueva_solucion.getCostoAsociado()))
-
-            if(nueva_solucion.getCostoAsociado() < self._S.getCostoAsociado()):
+            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
+            elif(cond_3opt):
+                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_3opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
+            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
+            elif(cond_4opt):
+                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_4opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
+            
+            nueva_solucion = self.cargaSolucion(nuevas_rutas)
+            print("Costo nueva sol: "+str(nueva_solucion.getCostoAsociado()))
+            
+            tenureADD = self.__tenureADD
+            tenureDROP = self.__tenureDROP
+            if(nueva_solucion.getCostoAsociado() < self.__S.getCostoAsociado()):
                 print("\nNuevo optimo encontrado")
-                self._S = nueva_solucion
+                self.__S = nueva_solucion
                 self.__rutas = nuevas_rutas
-                print("Nueva Solucion: "+str(self._S))
+                print("Nueva Solucion: "+str(self.__S))
                 print("Nuevas rutas: "+str(self.__rutas))
                 umbral = self.calculaUmbral()
+                tenureADD = self.__tenureMaxADD
+                tenureDROP = self.__tenureMaxDROP
                 
             for i in range(0, len(aristas_ADD)):
-                ADD.append(Tabu(aristas_ADD[i], self.__tenureADD))
-                DROP.append(Tabu(aristas_DROP[i], self.__tenureDROP))
+                ADD.append(Tabu(aristas_ADD[i], tenureADD))
+                DROP.append(Tabu(aristas_DROP[i], tenureDROP))
 
             self.decrementaTenure(lista_tabu)
             lista_tabu.extend(DROP)
@@ -355,6 +366,12 @@ class CVRP:
 
             iterac += 1
         
+        print("\nPrimera solucion obtenida: "+sol_ini)
+
+        print("\nMejor solucion obtenida: "+str(self.__S))
+        print("Rutas"+str(self.__rutas))
+
+
     def getPermitidos(self, lista_tabu, umbral):
         ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
         Aristas = []
@@ -363,7 +380,7 @@ class CVRP:
         #No tengo en consideracion a las aristas del tipo (v1,v1, dist), (v1,1, dist), (1,v2,dist), las que exceden el umbral
         # y las que pertencen a S
         for EP in self._G.getA():
-            pertS = any(x == EP for x in self._S.getA())
+            pertS = any(x == EP for x in self.__S.getA())
             if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1 and not pertS and EP.getPeso() <= umbral):
                 Aristas.append(EP)
         
