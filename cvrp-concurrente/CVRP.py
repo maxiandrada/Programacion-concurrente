@@ -10,12 +10,14 @@ import math
 import copy
 from clsTxt import clsTxt
 from time import time
+from Ingreso import Ingreso
 
 class CVRP:
-    def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
+    def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo,beta):
         self._G = Grafo(M)      #Grafo original
         print(len(M))
-        self._S = Solucion(M)
+        self._S = Solucion(self._G,D,nroV,capac,solI)
+        self._S2 = Solucion(self._S)
         self.__Distancias = M
         self.__Demanda = D      #Demanda de los clientes
         self.__capacidad = capac
@@ -29,6 +31,7 @@ class CVRP:
         self.__tenureMaxADD = int(tADD*1.7)
         self.__tenureDROP =  tDROP
         self.__tenureMaxDROP = int(tDROP*1.7)
+        self.beta = beta
         #self.__txt = clsTxt(str(nombreArchivo))
         self.__txt = None
         self.__tiempoMaxEjec = float(tiempo)
@@ -36,40 +39,36 @@ class CVRP:
         self.__nroVehiculos = nroV
         self.__tipoSolucionIni = solI
 
-        print("Se cargo el archivo")
-        #Iniciliza una matriz de frecuencias
-        for i in range(0, len(self._G.getMatriz())):
-            fila = []
-            for j in range(0, len(self._G.getMatriz())):
-                fila.append(0)
-                j
-            self.__frecMatriz.append(fila)
-            i
+#        print(str(self._G))
+
+        #self.mostrarDemanda()
         
-        print(str(self._G))
-        for i in range(0, len(self.__Demanda)):
-            print('%i : %s' %(i+1,str(self.__Demanda[i]))) 
-        
-        print(sum(self.__Demanda))
         print(self.__nroVehiculos)
 
-        self.__rutas = self._S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demanda, self.__capacidad)
-        A = []
-        V = []
-        for s in self.__rutas:
-            self.__costoTotal += s.getCostoAsociado()
-            A.extend(s.getA())
-            V.extend(s.getV())
-        for i in range(0, len(self.__rutas)):
-            print("\nRuta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]))
-        
-        self._S.setA(A)
-        self._S.setV(V)
-        self._S.setCosto(self.__costoTotal)
-        print("\nSolucion general: ", str(self._S))
-        
-        #self.tabuSearch()
+        # print("Se cargo el archivo")
+        # #Iniciliza una matriz de frecuencias
+        # for i in range(0, len(self._G.getMatriz())):
+        #     fila = []
+        #     for j in range(0, len(self._G.getMatriz())):
+        #         fila.append(0)
+        #         j
+        #     self.__frecMatriz.append(fila)
+        #     i
 
+    
+        #print(self._S)
+        self.setUmbral()
+        self.tabuSearch()
+
+    def setUmbral(self):
+        self.umbralGranularidad = self.beta*(self._S.getCostoTotal()/(self._G.getGrado()+self.__nroVehiculos))
+
+    
+
+    def mostrarDemanda(self):
+        for i in range(0, len(self.__Demanda)):
+            print('%i : %s' %(i+1,str(self.__Demanda[i]))) 
+        print(sum(self.__Demanda))
     # Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos, lista_permitidosSol):
         indices = []                #Indices de la lista de permitidos para hacer el swapp
@@ -278,102 +277,50 @@ class CVRP:
 
         return lista_tabu
     
-    
+    def crearGrafoDispercion(self):
+        self.GD = Grafo()
+        self.GD.setMatriz(self._G.getMatriz())
+
+        A = self._G.getA()
+        self.GD.setV(self._G.getV())
+        umbral = self.umbralGranularidad
+        print("Umbral de Granularidad: "+str(self.umbralGranularidad))
+        for a in A:
+            if(a.getPeso()<umbral or (a.getOrigen()==Vertice(1)and a.getDestino()!=Vertice(1))):
+                self.GD.getA().append(a)
+        self.GD.setCosto() #Actualiza el costo
+
+
+
     ####### Empezamos con Tabu Search #########
     def tabuSearch(self):
         lista_tabu = []         #Tiene objetos de la clase Tabu
         lista_permitidos = []   #Tiene objetos de la clase arista
-        Sol_Actual = copy.deepcopy(self._S)
+        #Sol_Actual = copy.deepcopy(self._S)
         
         #Atributos banderas utilizados
         condOptim = False   #En caso de que encontre uno mejor que el optimo lo guardo en el archivo txt
         condTS_Frecuencia = False #Empezamos a utilizar las aristas mas frecuentadas
         cond_3opt = False
         cond_4opt = False
-
-        #Atributos de tiempo y otros
+        
+        
+        self.crearGrafoDispercion() 
+        F1 = Solucion(self._S)
+        F2 = Solucion(self._S)
+        F2.penalizarSolucion(1000)
+        print(F1)
+        print(F2)
         tiempoIni = time()
         tiempoIniNoMejora = tiempoIni
         tiempoMax = float(self.__tiempoMaxEjec*60)
-        tiempoEjecuc = 0
-        iterac = 1
-        nroIntercambios = 4
-        #Duarnte 1min de no mejora o si es demasiado, la 1/5 parte del tiempo
-        tiempoMaxNoMejora = 2*60
-        if(tiempoMaxNoMejora > tiempoMax/4):
-            tiempoMaxNoMejora = float(tiempoMax/4)  #La 1/5 parte del tiempo, en caso de que los 1min sea demasiado
         
-        while(tiempoEjecuc <= tiempoMax and iterac<=2):
-            lista_permitidos, lista_permitidosSol = self.getPermitidos(lista_tabu)    #Lista de elementos que no son tabu
-            print("Lista de permitidos: "+str(lista_permitidos))
-            ADD = []
-            DROP = []
-            
-            #Verifico si hay vertices disponibles suficientes para el intercambio
-            if(len(lista_permitidos)>=4):
-                #Controla que el nro de intercambios no supere la longitud de permitidos
-                print("Len: "+str(len(lista_permitidos))+"   nroIntercambios: "+str(nroIntercambios))    
-                if(len(lista_permitidos)<nroIntercambios):
-                    nroIntercambios=len(lista_permitidos)
-                    if(nroIntercambios%2!=0):
-                        nroIntercambios-=1                    
-                
-                #+-+-+-+-+-+-+-+- Tabu Search Granular +-+-+-+-+-+-+-+-+-#
-                if(cond_3opt):
-                    #3-opt
-                    ind_random = random.sample(range(0,len(lista_permitidosSol)),1)
-                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                    ind_aux = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                    ind_random.append(ind_aux[-1])
-                elif(cond_4opt):
-                    #4-opt
-                    ind_random = random.sample(range(0,len(lista_permitidosSol)),2)
-                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                else:
-                    #2-opt    
-                    ind_random = random.sample(range(0,len(lista_permitidosSol)),int(nroIntercambios/2))
-                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
-                
-                #Crea los elementos ADD y DROP
-                for i in range(0,len(ind_random)):
-                    if(i%2!=0): #Los impares para ADD y los pares para DROP
-                        ADD.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureADD))
-                    else:
-                        DROP.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureDROP))
-                print("ADD: "+str(ADD))
-                print("DROP: "+str(DROP))
+        
+        #print(self.GD)
 
-                #Realiza el intercambio de los vertices seleccionados
-                if(cond_3opt):
-                    #3-opt
-                    Sol_Actual = Sol_Actual.swap_3opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento())
-                elif(cond_4opt):
-                    #4-opt v2
-                    Sol_Actual = Sol_Actual.swap_4opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento(), DROP[1].getElemento())
-                else:
-                    #2-opt y 4-opt v1
-                    for i in range(0,len(ADD)):
-                        Sol_Actual = Sol_Actual.swapp(ADD[i].getElemento(), DROP[i].getElemento())
-                
 
-            else:
-                print("No hay vertices disponibles para el intercambio. Elimina vertices de la lista Tabu")
-                self.borraFrecuentados(lista_tabu)
-            
-            self.decrementaTenure(lista_tabu)   #Decremento el tenure y elimino algunos elementos con tenure igual a 0
-            
-            #Agrego los nuevos vertices a la lista tabu o decremento el tiempo de iteracion de TS_Frecuencia
-            lista_tabu.extend(ADD)
-            lista_tabu.extend(DROP)
-            print("Lista tabu: "+str(lista_tabu))
-            
-            lista_permitidos = []
-            iterac += 1
-            tiempoEjecuc = time()-tiempoIni
-        #+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-        #Fin del while. Imprimo la solucion optima y algunos atributos
-        tiempoFin = time()
-        tiempoTotal = tiempoFin - tiempoIni
+
+
 
     def getPermitidos(self, lista_tabu: list):
         ListaPermit = []
@@ -662,3 +609,106 @@ class CVRP:
                 lista_tabu.pop(i)
                 i-=1
             i+=1
+
+    def tabuSearch2(self):
+        lista_tabu = []         #Tiene objetos de la clase Tabu
+        lista_permitidos = []   #Tiene objetos de la clase arista
+        Sol_Actual = copy.deepcopy(self._S)
+        
+        #Atributos banderas utilizados
+        condOptim = False   #En caso de que encontre uno mejor que el optimo lo guardo en el archivo txt
+        condTS_Frecuencia = False #Empezamos a utilizar las aristas mas frecuentadas
+        cond_3opt = False
+        cond_4opt = False
+
+        #Atributos de tiempo y otros
+        tiempoIni = time()
+        tiempoIniNoMejora = tiempoIni
+        tiempoMax = float(self.__tiempoMaxEjec*60)
+        tiempoEjecuc = 0
+        iterac = 1
+        nroIntercambios = 4
+        #Duarnte 1min de no mejora o si es demasiado, la 1/5 parte del tiempo
+        tiempoMaxNoMejora = 2*60
+        if(tiempoMaxNoMejora > tiempoMax/4):
+            tiempoMaxNoMejora = float(tiempoMax/4)  #La 1/5 parte del tiempo, en caso de que los 1min sea demasiado
+        
+        while(tiempoEjecuc <= tiempoMax and iterac<=2):
+            lista_permitidos, lista_permitidosSol = self.getPermitidos(lista_tabu)    #Lista de elementos que no son tabu
+            print("Lista de permitidos: "+str(lista_permitidos))
+            ADD = []
+            DROP = []
+            
+            #Verifico si hay vertices disponibles suficientes para el intercambio
+            if(len(lista_permitidos)>=4):
+                #Controla que el nro de intercambios no supere la longitud de permitidos
+                print("Len: "+str(len(lista_permitidos))+"   nroIntercambios: "+str(nroIntercambios))    
+                if(len(lista_permitidos)<nroIntercambios):
+                    nroIntercambios=len(lista_permitidos)
+                    if(nroIntercambios%2!=0):
+                        nroIntercambios-=1                    
+                
+                #+-+-+-+-+-+-+-+- Tabu Search Granular +-+-+-+-+-+-+-+-+-#
+                if(cond_3opt):
+                    #3-opt
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),1)
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                    ind_aux = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                    ind_random.append(ind_aux[-1])
+                elif(cond_4opt):
+                    #4-opt
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),2)
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                else:
+                    #2-opt    
+                    ind_random = random.sample(range(0,len(lista_permitidosSol)),int(nroIntercambios/2))
+                    ind_random = self.vecinosMasCercanosTSG(ind_random, lista_permitidos, lista_permitidosSol)
+                
+                #Crea los elementos ADD y DROP
+                for i in range(0,len(ind_random)):
+                    if(i%2!=0): #Los impares para ADD y los pares para DROP
+                        ADD.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureADD))
+                    else:
+                        DROP.append(Tabu(lista_permitidos[ind_random[i]], self.__tenureDROP))
+                print("ADD: "+str(ADD))
+                print("DROP: "+str(DROP))
+
+                #Realiza el intercambio de los vertices seleccionados
+                if(cond_3opt):
+                    #3-opt
+                    Sol_Actual = Sol_Actual.swap_3opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento())
+                elif(cond_4opt):
+                    #4-opt v2
+                    Sol_Actual = Sol_Actual.swap_4opt(ADD[0].getElemento(), DROP[0].getElemento(), ADD[1].getElemento(), DROP[1].getElemento())
+                else:
+                    #2-opt y 4-opt v1
+                    for i in range(0,len(ADD)):
+                        Sol_Actual = Sol_Actual.swapp(ADD[i].getElemento(), DROP[i].getElemento())
+                
+
+            else:
+                print("No hay vertices disponibles para el intercambio. Elimina vertices de la lista Tabu")
+                self.borraFrecuentados(lista_tabu)
+            
+            self.decrementaTenure(lista_tabu)   #Decremento el tenure y elimino algunos elementos con tenure igual a 0
+            
+            #Agrego los nuevos vertices a la lista tabu o decremento el tiempo de iteracion de TS_Frecuencia
+            lista_tabu.extend(ADD)
+            lista_tabu.extend(DROP)
+            print("Lista tabu: "+str(lista_tabu))
+            
+            lista_permitidos = []
+            iterac += 1
+            tiempoEjecuc = time()-tiempoIni
+        #+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
+        #Fin del while. Imprimo la solucion optima y algunos atributos
+        tiempoFin = time()
+        tiempoTotal = tiempoFin - tiempoIni
+
+if __name__ == "__main__":
+    arg = Ingreso(sys.argv)
+    
+    #Grafo(arg.M)
+    #print(arg.M)
+    cvrp = CVRP(arg.M,arg.D,arg.NV,arg.C,arg.F,arg.I,arg.intercambios,2,0,0,4,arg.O,2)
+

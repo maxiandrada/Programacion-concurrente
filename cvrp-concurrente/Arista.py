@@ -36,9 +36,18 @@ class Arista():
     
     def tieneDestino(self,V):
         return (V == self.getDestino())
-
+    
     def __eq__(self, A):
-        return ((self.__class__ == A.__class__) & (self.getOrigen() == A.getOrigen()) & (self.getDestino() == A.getDestino()) & (self.getPeso() == A.getPeso()))
+        if ((self.__class__ == A.__class__) & (self.getOrigen() == A.getOrigen())):
+            if(self.getDestino() == A.getDestino()):
+                if (A.getPeso()!= None):
+                    return (self.getPeso() == A.getPeso())
+                else:
+                    return True
+            else:
+                return False
+        else:
+            return False
 
     def __ne__(self, A):
         return((self.__class__ == A.__class__) & (self.getOrigen() != A.getOrigen()) & (self.getDestino() != A.getDestino()))
@@ -49,4 +58,6 @@ class Arista():
     def __repr__(self):
         return str(self)
 
- 
+
+
+    

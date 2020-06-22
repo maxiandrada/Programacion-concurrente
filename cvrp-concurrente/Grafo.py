@@ -5,15 +5,46 @@ import re
 import math 
 import copy
 
+class FilaMatrizDistancia():
+    def __init__(self,F,A = None,isNone=True,primerKey=0):
+        self.__F = F
+        self.__A = A
+        self.__isNone = isNone
+        self.__primerKey = primerKey
+
+    def __getitem__(self,key):
+        if(key is None):
+            if(self.__isNone):
+                return self.__A
+            else:
+                return [x for x in self.__A if x.tieneOrigen(self.__primerKey)]
+        else:
+            if(self.__isNone):
+                return [x for x in self.__A if x.tieneDestino(key)]
+            else:
+                if(isinstance(key,Vertice)):                             
+                    return self.__F[key.getValue()-1]                    
+                elif(isinstance(key,int)):                              
+                    return self.__F[key-1]
+
+
+
+
+    
+    def __repr__(self):
+        return self.__F
+
+
 class Grafo:
-    def __init__(self, M: list):
+    def __init__(self, M: list=None):
         self._V = []
         self._A = []
         self._costoAsociado = 0
         self._grado = 0
         self._matrizDistancias = M
-        if(M!=[]):
+        if(M!=[] and not M is None):
             self.cargarDesdeMatriz(M)
+            self._grado = len(M)
         
     def getGrado(self):
         return self._grado
@@ -173,7 +204,38 @@ class Grafo:
             dist = self.getMatriz()[rV.index(seq[i])][rV.index(seq[i+1])] #Referencias en la matriz
             self.getA().append(Arista(seq[i], seq[i+1], dist))
             costo+= dist
+        
+        origenLast= seq[len(seq)-1]
+        destinoLast= Vertice(1)
+        a = Arista(origenLast,destinoLast,self[origenLast][destinoLast])
+        
+        self._A.append(a)
         self._costoAsociado = costo + self.getMatriz()[rV.index(seq[len(seq)-1])][rV.index(seq[0])]
+
+    def cargarDesdeSecuenciaDeAristas(self,seq):
+        self._A = seq
+        self._V = []
+        costo = 0
+        for a in seq:
+            self._V.append(a.getOrigen())
+            costo += a.getPeso()
+
+
+
+        origenLast= seq[len(seq)-1].getDestino()
+        if(origenLast!=Vertice(1)):
+            destinoLast= Vertice(1)
+            a = Arista(origenLast,destinoLast,self[origenLast][destinoLast])
+            costo += a.getPeso()
+            self._A.append(a)
+        self._costoAsociado = costo
+
+    def setCosto(self, costo=None):
+        ret = 0
+        for i in range(len(self.getV())-1):
+            ret += self[self.getV()[i]][self.getV()[i+1]]
+
+        self._costoAsociado = ret
 
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
@@ -206,27 +268,27 @@ class Grafo:
         gNuevo.cargarDesdeSecuenciaDeVertices(copiaV)
         return gNuevo
 
-    def mejoresIndices(self, solucion, lista_permit):
-        mayorVerticeOrigen = 0
-        iMin = 0
-        for i in range(0,len(solucion)):
-            origen = solucion[i].getValue()-1
-            destino = solucion[i+1].getValue()-1
-            dist = self.getMatriz()[origen][destino]
-            
-            #Busca la peor arista
-            if(dist > mayorVerticeOrigen and (origen in lista_permit) and (destino in lista_permit)): 
-                minimo = self.getMatriz()[origen][0]
-                filaVertice = self.getMatriz()[origen]
-                jMin = 0
-                #Busca el mejor destino para la arista encontrada, asegurándose de que no esté en la lista Tabú
-                for j in range(0,len(filaVertice)):
-                    if(filaVertice[j]<minimo and Vertice(j+1) in lista_permit):
-                        minimo = dist
-                        jMin = j
-                iMin = i
-                
-                iMin
-                jMin
+    
 
-        return i,j
+
+#[v][v]
+#[v][int]
+#[int][v]
+#[int][int]
+#[None][int] 
+#[int][None]
+#[None][v]
+#[v][None]
+#[None][None] --> Retorna toda la lista :D 
+    def __getitem__(self,key=None):
+        if(key is None):
+            return FilaMatrizDistancia(self.getMatriz(),self.getA(),True,key)
+        else:
+            if(isinstance(key,Vertice)):
+                return FilaMatrizDistancia(self.getMatriz()[key.getValue()-1],self.getA(),False,key)
+            elif(isinstance(key,int)):
+                return FilaMatrizDistancia(self.getMatriz()[key-1],self.getA(),False,key)
+
+
+
+    

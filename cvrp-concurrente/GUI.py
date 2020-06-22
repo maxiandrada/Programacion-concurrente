@@ -292,3 +292,9 @@ class Ventana(tk.Tk):
     
 ventana = Ventana()
 ventana.mainloop()
+
+
+if __name__ == "__main__":
+    M = ventana.getMatriz()
+
+    
