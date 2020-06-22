@@ -305,8 +305,8 @@ class CVRP:
         lista_permitidos = []       #(Grafo Disperso)Tiene elementos del tipo Arista que no estan en la lista tabu y su distancia es menor al umbral
         nuevas_rutas = []
         nueva_solucion = None
-        cond_2opt = False
-        cond_3opt = True
+        cond_2opt = True
+        cond_3opt = False
         cond_4opt = False
         
         umbral = self.calculaUmbral()
@@ -321,7 +321,7 @@ class CVRP:
             sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
             sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad total: "+str(self.__rutas[i].getCapacidad())
 
-        while(iterac<=60):
+        while(iterac<=1000):
             print("\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Iteracion %d  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n" %(iterac))
             lista_permitidos = self.getPermitidos(lista_tabu, umbral)    #Lista de elementos que no son tabu
             #print("Lista de permitidos: "+str(lista_permitidos))
@@ -332,13 +332,21 @@ class CVRP:
             ind_random = [x for x in range(0,len(lista_permitidos))]
             random.shuffle(ind_random)
             
+            if(iterac%10==0):
+                if(cond_2opt):
+                    cond_2opt = False
+                elif(cond_3opt):
+                    cond_3opt = False
+                else:
+                    cond_2opt = cond_3opt = True
+
             if(cond_2opt):
                 nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_2opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
             #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
             elif(cond_3opt):
                 nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_3opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
             #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
-            elif(cond_4opt):
+            else:
                 nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_4opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
             
             nueva_solucion = self.cargaSolucion(nuevas_rutas)

@@ -642,7 +642,7 @@ class Solucion(Grafo):
                 else:
                     print("Encontré una solución factible")
                     sol_factible = True
-            #4-opt en la misma ruta
+            #4-opt en la misma ruta. Condicion: Deben haber 4 aristas de separacion entre a y b, si no se realiza 2-opt
             else:
                 #1-2-a-3-4-5-6-b-7
                 #(a,b)  1-2-a-b-4-5-6-3-7
@@ -653,16 +653,33 @@ class Solucion(Grafo):
                 #   (3,7)   (b,7)
                 r = rutas[ind_rutas[0]]
                 print("Ruta antes: "+str(r))
+                V_r = r.getV()
+                V_r.append(Vertice(1,0))
                 #Descompongo la ruta
-                V_r_left = r.getV()[:ind_A[0]+1]                #1-2-a
-                V_r_middle = r.getV()[ind_A[0]+1:ind_A[1]+1]    #3-4
-                V_r_right = r.getV()[ind_A[1]+1:]               #b-5-6-7
-                V_r_right = V_r_right[1:]                       #5-6-7   *No puedo hacer r.getV()[ind_A[1]+2:] xq el indice podria exceder el tam 
-                V_r_right.append(Vertice(1,0))                  #5-6-7-1
-
+                V_r_left = V_r[:ind_A[0]+1]                #1-2-a
+                V_r_middle = V_r[ind_A[0]+2:ind_A[1]+1]    #3-4
+                V_r_right = V_r[ind_A[1]+2:]               #b-5-6-7
+                
                 A_r_drop1 = r.getA()[ind_A[0]]
-                A_r_drop2 = r.getA()[ind_A[1]+1]
+                A_r_drop2 = r.getA()[ind_A[0]+1]
                 A_r_drop3 = r.getA()[ind_A[1]]
+                A_r_drop4 = r.getA()[ind_A[1]+1]
+                
+                #Obtengo las otras aristas ADD
+                V_origen = V_destino
+                V_destino = A_r_drop1.getDestino()
+                peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
+                A_r_add1 = Arista(V_origen,V_destino, peso)
+
+                V_origen = A_r_drop3.getOrigen()
+                V_destino = A_r_drop1.getDestino()
+                peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
+                A_r_add2 = Arista(V_origen,V_destino, peso)
+
+                V_origen = V_destino
+                V_destino = V_r_right[0]
+                peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
+                A_r_add3 = Arista(V_origen,V_destino, peso)
 
                 #print("V_r_l: "+str(V_r_left))
                 #print("V_r_m: "+str(V_r_middle))
@@ -670,33 +687,31 @@ class Solucion(Grafo):
                 #print("A_r_drop1: "+str(A_r_drop1))
                 #print("A_r_drop2: "+str(A_r_drop2))
                 #print("A_r_drop3: "+str(A_r_drop3))
+                #print("A_r_drop4: "+str(A_r_drop4))
+                #print("A_r_add1: "+str(A_r_add1))
+                #print("A_r_add2: "+str(A_r_add2))
+                #print("A_r_add3: "+str(A_r_add3))
 
-                #Obtengo las otra arista ADD
-                V_origen = V_r_middle[-1]
-                V_destino = V_r_right[0]
-                peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
-                A_r_add1 = Arista(V_origen,V_destino, peso)
-
-                V_origen = r.getV()[ind_A[1]+1]
-                V_destino = V_r_middle[0]
-                peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
-                A_r_add2 = Arista(V_origen,V_destino, peso)
-
-                ADD.append(A_r_add1)                
-                DROP.append(A_r_drop1)
-                DROP.append(A_r_drop2)
-
-                if(len(V_r_middle)>1):
+                if(len(V_r_middle)>=2):
+                    ADD.append(A_r_add1)
                     ADD.append(A_r_add2)
+                    ADD.append(A_r_add3)
+                    DROP.append(A_r_drop1)
+                    DROP.append(A_r_drop2)
                     DROP.append(A_r_drop3)
+                    DROP.append(A_r_drop4)
                 else:
                     print("Se aplica 2-opt ya que solo existe una arista intermedia para hacer el swap")
+                    ADD.append(A_r_add3)
+                    DROP.append(A_r_drop1)
+                    DROP.append(A_r_drop4)
 
                 print("DROP: "+str(DROP))
                 print("ADD: "+str(ADD))
 
-                V_r_left.append(r.getV()[ind_A[1]+1])
+                V_r_left.append(A_r_drop4.getOrigen())
                 V_r_left.extend(V_r_middle)
+                V_r_left.append(A_r_add3.getOrigen())
                 V_r_left.extend(V_r_right)
                 V_r = V_r_left[:-1]
                 
@@ -710,8 +725,6 @@ class Solucion(Grafo):
                 else:
                     print("Encontré una solución factible")
                     sol_factible = True 
-        #Fin del while (se encontro una solucion factible)
-        
         #Fin del while (se encontro una solucion factible)
         
         return rutas, ADD, DROP
