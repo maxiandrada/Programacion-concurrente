@@ -23,6 +23,7 @@ class CVRP:
         self.__costoTotal = 0
         self.__nroVehiculos = nroV
         self.__tipoSolucionIni = solI
+        self.__beta = 1
 
         self.__nroIntercambios=intercamb*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
         self.__opt=opt
@@ -31,8 +32,7 @@ class CVRP:
         self.__tenureMaxADD = int(tADD*1.7)
         self.__tenureDROP =  tDROP
         self.__tenureMaxDROP = int(tDROP*1.7)
-        #self.__txt = clsTxt(str(nombreArchivo))
-        self.__txt = None
+        self.__txt = clsTxt(str(archivo))
         self.__tiempoMaxEjec = float(tiempo)
         self.__frecMatriz = []
         self.__soluciones = []
@@ -46,8 +46,9 @@ class CVRP:
             self.__frecMatriz.append(fila)
             i
 
-        print(str(self._G))
-        print("Demandas:")
+        #print(str(self._G))
+        #print("\n"+str(self._G.getMatriz()[19:][:]))
+        print("\nDemandas:")
         for v in self._G.getV():
             print(str(v)+": "+str(v.getDemanda())) 
         print("SumDemanda: ",sum(self.__Demandas))
@@ -65,11 +66,21 @@ class CVRP:
         S = Solucion(self.__Distancias, self.__Demandas, sum(self.__Demandas))
         cap = 0
         costoTotal = 0
-        for s in rutas:
+        sol_ini = ""
+        for i in range(0, len(self.__rutas)):
+            s = rutas[i]
             costoTotal += s.getCostoAsociado()
             cap += s.getCapacidad()
             A.extend(s.getA())
             V.extend(s.getV())
+
+            sol_ini+="\nRuta del vehiculo "+str(i+1)+":"
+            sol_ini+="\nRecorrido: "+str(self.__rutas[i].getV())
+            sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
+            sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad: "+str(self.__rutas[i].getCapacidad())+"\n"
+        sol_ini+="--> Costo total: "+str(costoTotal)+"          Capacidad total: "+str(cap)
+        self.__txt.escribir(sol_ini)
+
         S.setA(A)
         S.setV(V)
         S.setCosto(costoTotal)
@@ -77,6 +88,186 @@ class CVRP:
         S.setCapacidadMax(self.__capacidadMax)
 
         return S
+
+    #Umbral de granularidad: phi = Beta*(c/(n+k))
+    #Beta = 1   parametro de dispersion. Sirve para modificar el grafo disperso para incluir la diversificación y la intensificación
+    #           durante la búsqueda.
+    #c = valor de una sol. inicial
+    #k = nro de vehiculos
+    #n = nro de clientes
+    def calculaUmbral(self):
+        c = self.__S.getCostoAsociado()
+        k = self.__nroVehiculos
+        n = len(self.__Distancias)-1
+        phi = c/(n+k)
+        phi = phi*self.__beta
+        return round(phi,3)
+
+    ####### Empezamos con Tabu Search #########
+    def tabuSearch(self):
+        lista_tabu = []             #Tiene objetos de la clase Tabu
+        lista_permitidos = []       #(Grafo Disperso)Tiene elementos del tipo Arista que no estan en la lista tabu y su distancia es menor al umbral
+        nuevas_rutas = []
+        nueva_solucion = None
+        solucion_actual = copy.deepcopy(self.__S)
+        umbral = self.calculaUmbral()
+        
+        #Atributos de tiempo y otros
+        tiempoIni = time()
+        tiempoIniEstancamiento = tiempoIni       
+        #tiempoIniNoMejora = tiempoIni
+        tiempoMax = float(self.__tiempoMaxEjec*60)
+        tiempoEjecuc = 0
+        
+        cond_2opt = True
+        cond_3opt = False
+        cond_Optimiz = True
+
+        iterac = 1
+        #iteracEstancamiento = 1
+        
+        self.__txt.escribir("+-+-+-+-+-+-+-+-+-+-+-+-+ GRAFO CARGADO +-+-+-+-+-+-+-+-+-+-+-+-+-")
+        self.__txt.escribir(str(self._G))
+        self.__txt.escribir("+-+-+-+-+-+-+-+-+-+-+-+-+- SOLUCION INICIAL +-+-+-+-+-+-+-+-+-+-+-+-+-+-")
+        sol_ini = str(self.__S)
+        for i in range(0, len(self.__rutas)):
+            sol_ini+="\nRuta del vehiculo "+str(i+1)+":"
+            sol_ini+="\nRecorrido: "+str(self.__rutas[i].getV())
+            sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
+            sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad: "+str(self.__rutas[i].getCapacidad())
+        self.__txt.escribir(sol_ini)
+
+        Aristas_Opt = []
+        for EP in self._G.getA():
+            if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1 and EP.getPeso() <= umbral):
+                Aristas_Opt.append(EP)
+        Aristas = Aristas_Opt
+        
+        while(tiempoEjecuc < tiempoMax):
+            cad = "\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Iteracion %d  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n" %(iterac)
+            print(cad)
+            self.__txt.escribir(cad)
+            lista_permitidos, Aristas = self.getPermitidos(Aristas, lista_tabu, umbral, cond_Optimiz)    #Lista de elementos que no son tabu
+            cond_Optimiz = False
+            cad = "Lista de permitidos: " +str(lista_permitidos)
+            #print(cad)
+            cad = "Lista tabu: "+str(lista_tabu)
+            print(cad)
+            self.__txt.escribir(cad)
+            ADD = []
+            DROP = []
+            
+            ind_random = [x for x in range(0,len(lista_permitidos))]
+            random.shuffle(ind_random)
+            
+            if(iterac%10==0):
+                if(cond_2opt):
+                    cond_2opt = False
+                elif(cond_3opt):
+                    cond_3opt = False
+                else:
+                    cond_2opt = cond_3opt = True
+
+            if(cond_2opt):
+                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_2opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
+            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
+            elif(cond_3opt):
+                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_3opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
+            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
+            else:
+                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_4opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
+            
+            nueva_solucion = self.cargaSolucion(nuevas_rutas)
+            print("Costo nueva sol: "+str(nueva_solucion.getCostoAsociado()))
+            
+            tenureADD = self.__tenureADD
+            tenureDROP = self.__tenureDROP
+            
+            if(nueva_solucion.getCostoAsociado() < self.__S.getCostoAsociado()):
+                print("\nNuevo optimo encontrado")
+                tiempoTotal = time()-tiempoIniEstancamiento
+                print("La solución anterior duró " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg    -------> Nuevo optimo encontrado. Costo: "+str(nueva_solucion.getCostoAsociado()))
+                self.__S = nueva_solucion
+                self.__rutas = nuevas_rutas
+                print("Nueva Solucion: "+str(self.__S))
+                print("Nuevas rutas: "+str(self.__rutas))
+                umbral = self.calculaUmbral()
+                tenureADD = self.__tenureMaxADD
+                tenureDROP = self.__tenureMaxDROP
+                #iteracEstancamiento = 1
+                cond_Optimiz = True
+                tiempoIniEstancamiento = time()
+                Aristas = Aristas_Opt
+                
+            for i in range(0, len(aristas_ADD)):
+                ADD.append(Tabu(aristas_ADD[i], tenureADD))
+                DROP.append(Tabu(aristas_DROP[i], tenureDROP))
+
+            self.decrementaTenure(lista_tabu)
+            lista_tabu.extend(DROP)
+            lista_tabu.extend(ADD)
+
+            tiempoEjecuc = time()-tiempoIni
+            iterac += 1
+        print("\nPrimera solucion obtenida: "+sol_ini)
+        print("\nMejor solucion obtenida: "+str(self.__S))
+        print("Rutas"+str(self.__rutas))
+
+        tiempoFin = time()
+        tiempoTotal = tiempoFin - tiempoIni
+        self.__txt.escribir("\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Solucion Optima +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-")
+        sol_ini = ""
+        for i in range(0, len(self.__rutas)):
+            sol_ini+="\nRuta del vehiculo "+str(i+1)+":"
+            sol_ini+="\nRecorrido: "+str(self.__rutas[i].getV())
+            sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
+            sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad: "+str(self.__rutas[i].getCapacidad())
+        self.__txt.escribir(sol_ini)
+        porcentaje = round(self.__S.getCostoAsociado()/self.__optimo -1.0, 3)
+        self.__txt.escribir("\nCosto total:  " + str(self.__S.getCostoAsociado()) + "        Optimo real:  " + str(self.__optimo)+"      Desviación: "+str(porcentaje*100)+"%")
+        self.__txt.escribir("\nCantidad de iteraciones: "+str(iterac))
+        self.__txt.escribir("\nTiempo total: " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg")
+        self.__txt.imprimir()
+        
+        print("\nTermino!! :)")
+        print("Tiempo total: " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg\n")
+
+
+    def getPermitidos(self, Aristas, lista_tabu, umbral, cond_Optimiz):
+        ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
+        #Aristas = []
+        AristasNuevas = []
+        #No tengo en consideracion a las aristas del tipo (v1,v1, dist), (v1,1, dist), (1,v2,dist), las que exceden el umbral
+        # y las que pertencen a S
+        if(cond_Optimiz):
+            print("Cond_optimizacion")
+            for EP in Aristas:
+                pertS = False
+                for A_S in self.__S.getA():
+                    if A_S == EP:
+                        pertS = True
+                        break
+                #pertS = any(x == EP for x in self.__S.getA())
+                if(not pertS and EP.getPeso() <= umbral):
+                    AristasNuevas.append(EP)
+        else:
+            AristasNuevas = Aristas
+        #La lista tabu esta vacia, entonces la lista de permitidas tiene todas las aristas anteriores
+        if(len(lista_tabu) == 0):
+            ListaPermit = AristasNuevas
+        #La lista tabu tiene elementos, agrego los que no estan en lista tabu
+        else:
+            for EP in AristasNuevas:
+                cond = True
+                for ET in lista_tabu:
+                    if(EP == ET.getElemento()):
+                        cond = False
+                        break
+                if(cond):
+                    ListaPermit.append(EP)
+            
+        return ListaPermit, AristasNuevas
+
 
     #Para el Tabu Search Granular
     def vecinosMasCercanosTSG(self, indicesRandom, lista_permitidos, lista_permitidosSol):
@@ -284,136 +475,12 @@ class CVRP:
         self.decrementaTenure(lista_tabu)
 
         return lista_tabu
-    
-    
-    #Umbral de granularidad: phi = Beta*(c/(n+k))
-    #Beta = 1   parametro de dispersion. Sirve para modificar el grafo disperso para incluir la diversificación y la intensificación
-    #           durante la búsqueda.
-    #c = valor de una sol. inicial
-    #k = nro de vehiculos
-    #n = nro de clientes
-    def calculaUmbral(self):
-        c = self.__S.getCostoAsociado()
-        k = self.__nroVehiculos
-        n = len(self.__Distancias)-1
-        phi = c/(n+k)
-        return round(phi,3)
-
-    ####### Empezamos con Tabu Search #########
-    def tabuSearch(self):
-        lista_tabu = []             #Tiene objetos de la clase Tabu
-        lista_permitidos = []       #(Grafo Disperso)Tiene elementos del tipo Arista que no estan en la lista tabu y su distancia es menor al umbral
-        nuevas_rutas = []
-        nueva_solucion = None
-        cond_2opt = True
-        cond_3opt = False
-        cond_4opt = False
-        
-        umbral = self.calculaUmbral()
-            
-        iterac = 1
-        
-        solucion_actual = copy.deepcopy(self.__S)
-        sol_ini = str(self.__S)
-        for i in range(0, len(self.__rutas)):
-            sol_ini+="\nRuta del vehiculo "+str(i+1)+":"
-            sol_ini+="\nRecorrido: "+str(self.__rutas[i].getV())
-            sol_ini+="\nAristas: "+str(self.__rutas[i].getA())
-            sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad total: "+str(self.__rutas[i].getCapacidad())
-
-        while(iterac<=1000):
-            print("\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Iteracion %d  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n" %(iterac))
-            lista_permitidos = self.getPermitidos(lista_tabu, umbral)    #Lista de elementos que no son tabu
-            #print("Lista de permitidos: "+str(lista_permitidos))
-            print("Lista tabu: "+str(lista_tabu))
-            ADD = []
-            DROP = []
-            
-            ind_random = [x for x in range(0,len(lista_permitidos))]
-            random.shuffle(ind_random)
-            
-            if(iterac%10==0):
-                if(cond_2opt):
-                    cond_2opt = False
-                elif(cond_3opt):
-                    cond_3opt = False
-                else:
-                    cond_2opt = cond_3opt = True
-
-            if(cond_2opt):
-                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_2opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
-            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
-            elif(cond_3opt):
-                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_3opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
-            #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
-            else:
-                nuevas_rutas, aristas_ADD, aristas_DROP = solucion_actual.swap_4opt(lista_permitidos, ind_random, self.__rutas, self.__Demandas)
-            
-            nueva_solucion = self.cargaSolucion(nuevas_rutas)
-            print("Costo nueva sol: "+str(nueva_solucion.getCostoAsociado()))
-            
-            tenureADD = self.__tenureADD
-            tenureDROP = self.__tenureDROP
-            if(nueva_solucion.getCostoAsociado() < self.__S.getCostoAsociado()):
-                print("\nNuevo optimo encontrado")
-                self.__S = nueva_solucion
-                self.__rutas = nuevas_rutas
-                print("Nueva Solucion: "+str(self.__S))
-                print("Nuevas rutas: "+str(self.__rutas))
-                umbral = self.calculaUmbral()
-                tenureADD = self.__tenureMaxADD
-                tenureDROP = self.__tenureMaxDROP
-                
-            for i in range(0, len(aristas_ADD)):
-                ADD.append(Tabu(aristas_ADD[i], tenureADD))
-                DROP.append(Tabu(aristas_DROP[i], tenureDROP))
-
-            self.decrementaTenure(lista_tabu)
-            lista_tabu.extend(DROP)
-            lista_tabu.extend(ADD)
-
-            iterac += 1
-        
-        print("\nPrimera solucion obtenida: "+sol_ini)
-
-        print("\nMejor solucion obtenida: "+str(self.__S))
-        print("Rutas"+str(self.__rutas))
-
-
-    def getPermitidos(self, lista_tabu, umbral):
-        ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
-        Aristas = []
-
-        print("Umbral: ",umbral)
-        #No tengo en consideracion a las aristas del tipo (v1,v1, dist), (v1,1, dist), (1,v2,dist), las que exceden el umbral
-        # y las que pertencen a S
-        for EP in self._G.getA():
-            pertS = any(x == EP for x in self.__S.getA())
-            if(EP.getOrigen() != EP.getDestino() and EP.getDestino()!=1 and not pertS and EP.getPeso() <= umbral):
-                Aristas.append(EP)
-        
-        #La lista tabu esta vacia, entonces la lista de permitidas tiene todas las aristas anteriores
-        if(len(lista_tabu) == 0):
-            ListaPermit = Aristas
-        
-        #La lista tabu tiene elementos, agrego los que no estan en lista tabu
-        else:
-            for EP in Aristas:
-                cond = True
-                for ET in lista_tabu:
-                    if(EP == ET.getElemento()):
-                        cond = False
-                        break
-                if(cond):
-                    ListaPermit.append(EP)
-            
-        return ListaPermit
 
     ####### Empezamos con Tabu Search #########
     def tabuSearch_1(self, strSolInicial):
         lista_tabu = []     #Tiene objetos de la clase Tabu
         lista_permit = []   #Tiene objetos del tipo vertice      
-        g1 = self._G.copyVacio()  #La primera solucion corresponde a g1
+        #g1 = self._G.copyVacio()  #La primera solucion corresponde a g1
         
         if(strSolInicial=="Vecino mas cercano"):
             ########Partimos del vecino mas cercano###########
@@ -426,22 +493,22 @@ class CVRP:
             #solucionAzar = self.solucionAlAzar()
             #g1.cargarDesdeSecuenciaDeVertices(solucionAzar)
 
-        self.__soluciones.append(g1) #Agregar solución inicial
-        self.incrementaFrecuencia(g1)
+        #self.__soluciones.append(g1) #Agregar solución inicial
+        #self.incrementaFrecuencia(g1)
         
         print("Comenzando Tabu Search")
         self.__txt.escribir("############### GRAFO CARGADO #################")
         self.__txt.escribir(str(self._G))
         self.__txt.escribir("################ SOLUCION INICIAL #################")
-        self.__txt.escribir("Vertices:        " + str(g1.getV()))
-        self.__txt.escribir("Aristas:         " + str(g1.getA()))
+        #self.__txt.escribir("Vertices:        " + str(g1.getV()))
+        #self.__txt.escribir("Aristas:         " + str(g1.getA()))
         #self.__txt.escribir("Costo asociado:  " + str(g1.getCostoAsociado()))
         
         ##############     Atributos       ################
         #Soluciones a utilizar
-        Sol_Actual = self._G.copyVacio()
-        Sol_Actual = self.__soluciones[len(self.__soluciones)-1]        #La actual es la Primera solución
-        Sol_Optima = copy.deepcopy(Sol_Actual)      #Ultima solucion optima obtenida, corresponde a la primera Solucion
+        #Sol_Actual = self._G.copyVacio()
+        #Sol_Actual = self.__soluciones[len(self.__soluciones)-1]        #La actual es la Primera solución
+        #Sol_Optima = copy.deepcopy(Sol_Actual)      #Ultima solucion optima obtenida, corresponde a la primera Solucion
         
         #Atributos banderas utilizados
         condOptim = False   #En caso de que encontre uno mejor que el optimo lo guardo en el archivo txt
@@ -469,11 +536,11 @@ class CVRP:
         print("Tiempo maximo: "+str(int(tiempoMax/60))+"min "+str(int(tiempoMax%60))+"seg")
         print("Tiempo maximo estancamiento: "+str(int(tiempoMaxNoMejora/60))+"min "+str(int(tiempoMaxNoMejora%60))+"seg")
         print("Optimo real: "+str(self.__optimo))
-        print("Solucion inicial: "+str(Sol_Optima.getCostoAsociado()))
+        #print("Solucion inicial: "+str(Sol_Optima.getCostoAsociado()))
 
         nroIntercambios = 2 #Empezamos con 2 al inicio
         while(tiempoEjecuc <= tiempoMax):
-            lista_permit = self.pertenListaTabu_1(lista_tabu)    #Lista de elementos que no son tabu
+            #lista_permit = self.pertenListaTabu_1(lista_tabu)    #Lista de elementos que no son tabu
             ADD = []
             DROP = []
             
@@ -494,8 +561,8 @@ class CVRP:
                     print("Tiempo restante: "+str(int(tiempoRestante/60))+"min "+str(int(tiempoRestante%60))+ "seg")
                     
                     print("\nAplicamos frecuencia de aristas mas visitadas")
-                    lista_tabu = self.TS_Frecuencia(Sol_Optima, lista_tabu, nroIntercambios)                    
-                    lista_permit = self.pertenListaTabu_1(lista_tabu)
+                    #lista_tabu = self.TS_Frecuencia(Sol_Optima, lista_tabu, nroIntercambios)                    
+                    #lista_permit = self.pertenListaTabu_1(lista_tabu)
                     condTS_Frecuencia = not condTS_Frecuencia
                     
                     #Se intercambia movimientos entre 2-opt, 3-opt y 4-opt

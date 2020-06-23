@@ -183,42 +183,45 @@ class Solucion(Grafo):
     #2-opt:
     def swap_2opt(self, lista_permitidos, ind_random, rutas_orig, demandas):
         sol_factible = False
-        rutas = []
+        rutas = rutas_orig
         print("\nswap 2-opt")
-        
+        print("rutas antes: "+str(rutas))
+        ADD = []
+        DROP = []
+            
         while(not sol_factible and len(ind_random)>=1):
             ADD = []
             DROP = []
             arista_ini = lista_permitidos[ind_random[-1]]
-            print("arista azar: "+str(arista_ini))
+            print("-->  arista azar: "+str(arista_ini))
             ind_random.pop()
-            ADD.append(arista_ini)
-
+            
             V_origen = arista_ini.getOrigen()
             V_destino = arista_ini.getDestino()
             
+            ADD.append(arista_ini)
+            
             rutas = copy.deepcopy(rutas_orig)
-            print("rutas: "+str(rutas))
 
             ind_rutas, ind_A = self.getPosiciones(V_origen, V_destino, rutas_orig)
-            
+
             if(ind_rutas[0]!=ind_rutas[1]):
                 r1 = rutas[ind_rutas[0]]
                 r2 = rutas[ind_rutas[1]]
                 #print("r1 antes: "+str(r1))
                 #print("r2 antes: "+str(r2))
-
                 A_r1_left = r1.getA()[:ind_A[0]]
-                A_r1_drop = r1.getA()[ind_A[0]]
                 A_r1_right = r1.getA()[ind_A[0]+1:]
                 
                 A_r2_left = r2.getA()[:ind_A[1]]
-                A_r2_drop = r2.getA()[ind_A[1]]
                 A_r2_right = r2.getA()[ind_A[1]+1:]
                 
-                DROP.append(A_r1_drop)
-                DROP.append(A_r2_drop)
+                if(A_r1_right==[] and A_r2_left==[]):
+                    continue
 
+                A_r1_drop = r1.getA()[ind_A[0]]
+                A_r2_drop = r2.getA()[ind_A[1]]
+                
                 #print("\nA_r1_l: "+str(A_r1_left))
                 #print("A_r1_r: "+str(A_r1_right))
                 #print("A_r2_l: "+str(A_r2_left))
@@ -248,9 +251,12 @@ class Solucion(Grafo):
                 else:
                     V_destino = Vertice(1,0)
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
-                arista_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
-                ADD.append(arista_add)
-
+                A_r_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
+                
+                ADD.append(A_r_add)
+                DROP.append(A_r1_drop)
+                DROP.append(A_r2_drop)
+                
                 A_r1_left.append(ADD[0])
                 A_r1_left.extend(A_r2_right)
                 A_r2_left.append(ADD[1])
@@ -260,19 +266,18 @@ class Solucion(Grafo):
                 cap_r2 = r2.cargaDesdeAristas(A_r2_left)
                 r1.setCapacidad(cap_r1)
                 r2.setCapacidad(cap_r2)
-                
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
-                
-                print("r1 ahora: "+str(r1))
-                print("r2 ahora: "+str(r2))
-                print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
+
+                #print("DROP: "+str(DROP))
+                #print("ADD: "+str(ADD))
                 
                 if(cap_r1 > self.__capacidadMax or cap_r2 > self.__capacidadMax):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
                     print("Encontré una solución factible")
+                    print("r1 ahora: "+str(r1))
+                    print("r2 ahora: "+str(r2))
+                    print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
                     sol_factible = True
             else:
                 #1-15-17-18-21-22-25-27     (25,18) equiv (18,25)
@@ -302,14 +307,14 @@ class Solucion(Grafo):
                 V_origen = V_r_middle[-1]    # => (6, )
                 V_destino = V_r_right[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
-                arista_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
+                A_r_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
 
-                ADD.append(arista_add)                
+                ADD.append(A_r_add)                
                 DROP.append(A_r_drop1)
                 DROP.append(A_r_drop2)
-
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
+                    
+                #print("DROP: "+str(DROP))
+                #print("ADD: "+str(ADD))
 
                 V_r_left.append(r.getV()[ind_A[1]+1])
                 V_r_left.extend(V_r_middle)
@@ -318,13 +323,13 @@ class Solucion(Grafo):
                 
                 cap = r.cargarDesdeSecuenciaDeVertices(V_r)
                 r.setCapacidad(cap)
-                print("ruta ahora: "+str(r))
-                print("capacidad: ",cap)
                 if(cap > self.__capacidadMax):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
                     print("Encontré una solución factible")
+                    print("ruta ahora: "+str(r))
+                    print("capacidad: ",cap)
                     sol_factible = True
         #Fin del while (se encontro una solucion factible)
         
@@ -332,8 +337,11 @@ class Solucion(Grafo):
 
     def swap_3opt(self, lista_permitidos, ind_random, rutas_orig, demandas):
         sol_factible = False
-        rutas = []
+        rutas = rutas_orig
+        ADD = []
+        DROP = []
         print("\nswap 3-opt")
+        print("rutas: "+str(rutas))
         
         while(not sol_factible and len(ind_random)>=1):
             ADD = []
@@ -347,14 +355,13 @@ class Solucion(Grafo):
             V_destino = arista_ini.getDestino()
             
             rutas = copy.deepcopy(rutas_orig)
-            print("rutas: "+str(rutas))
 
             ind_rutas, ind_A = self.getPosiciones(V_origen, V_destino, rutas_orig)
             if(ind_rutas[0]!=ind_rutas[1]):
                 r1 = rutas[ind_rutas[0]]
                 r2 = rutas[ind_rutas[1]]
-                print("r1 antes: "+str(r1))
-                print("r2 antes: "+str(r2))
+                #print("r1 antes: "+str(r1))
+                #print("r2 antes: "+str(r2))
                 #Sol: 1-2-a-3-4   1-5-b-6-7-8
                 #(a,b)
                 #Sol_nueva:    1-2-3-4         1-5-a-b-6-7-8
@@ -415,16 +422,15 @@ class Solucion(Grafo):
                 r1.setCapacidad(cap_r1)
                 r2.setCapacidad(cap_r2)
                 
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
-                print("r1 ahora: "+str(r1))
-                print("r2 ahora: "+str(r2))
-                print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
-                
                 if(cap_r1 > self.__capacidadMax or cap_r2 > self.__capacidadMax):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
+                    print("DROP: "+str(DROP))
+                    print("ADD: "+str(ADD))
+                    print("r1 ahora: "+str(r1))
+                    print("r2 ahora: "+str(r2))
+                    print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
                     print("Encontré una solución factible")
                     sol_factible = True
             
@@ -436,7 +442,7 @@ class Solucion(Grafo):
                 #   (4,5)   (5,b)
                 #   (b,3)   (a,3)
                 r = rutas[ind_rutas[0]]
-                print("Ruta antes: "+str(r))
+                #print("Ruta antes: "+str(r))
                 #Descompongo la ruta
                 V_r_left = r.getV()[:ind_A[0]+1]                #1-2-a
                 V_r_middle = r.getV()[ind_A[0]+1:ind_A[1]+1]    #3-4
@@ -476,8 +482,8 @@ class Solucion(Grafo):
                 else:
                     print("Se aplica 2-opt ya que solo existe una arista intermedia para hacer el swap")
 
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
+                #print("DROP: "+str(DROP))
+                #print("ADD: "+str(ADD))
 
                 V_r_left.append(r.getV()[ind_A[1]+1])
                 V_r_left.extend(V_r_middle)
@@ -486,12 +492,12 @@ class Solucion(Grafo):
                 
                 cap = r.cargarDesdeSecuenciaDeVertices(V_r)
                 r.setCapacidad(cap)
-                print("ruta ahora: "+str(r))
-                print("capacidad: ",cap)
                 if(cap > self.__capacidadMax):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
+                    print("ruta ahora: "+str(r))
+                    print("capacidad: ",cap)
                     print("Encontré una solución factible")
                     sol_factible = True 
         #Fin del while (se encontro una solucion factible)
@@ -500,14 +506,16 @@ class Solucion(Grafo):
             
     def swap_4opt(self, lista_permitidos, ind_random, rutas_orig, demandas):
         sol_factible = False
-        rutas = []
+        rutas = rutas_orig
+        ADD = []
+        DROP = []
         print("\nswap 4-opt")
-        
+        print("ruta antes: "+str(rutas))
         while(not sol_factible and len(ind_random)>=1):
             ADD = []
             DROP = []
             arista_ini = lista_permitidos[ind_random[-1]]
-            print("arista azar: "+str(arista_ini))
+            #print("arista azar: "+str(arista_ini))
             ind_random.pop()
             ADD.append(arista_ini)
 
@@ -515,7 +523,7 @@ class Solucion(Grafo):
             V_destino = arista_ini.getDestino()
             
             rutas = copy.deepcopy(rutas_orig)
-            print("rutas: "+str(rutas))
+            #print("rutas: "+str(rutas))
 
             ind_rutas, ind_A = self.getPosiciones(V_origen, V_destino, rutas_orig)
             
@@ -523,8 +531,8 @@ class Solucion(Grafo):
             if(ind_rutas[0]!=ind_rutas[1]):
                 r1 = rutas[ind_rutas[0]]
                 r2 = rutas[ind_rutas[1]]
-                print("r1 antes: "+str(r1))
-                print("r2 antes: "+str(r2))
+                #print("r1 antes: "+str(r1))
+                #print("r2 antes: "+str(r2))
                 #Sol: 1-2-3-a-4   1-5-6-7-8-b
                 #1-2-3-a-b    1-5-6-7-8-4   ADD (a,b)(8,4) DROP (a,4)(8,b)
                 #Sol: 1-2-3-4-a   1-5-6-7-8-b
@@ -618,8 +626,8 @@ class Solucion(Grafo):
                 ADD.append(A_r2_add1)
                 ADD.append(A_r2_add2)
 
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
+                #print("DROP: "+str(DROP))
+                #print("ADD: "+str(ADD))
                 
                 V_r1_left.append(ADD[0].getDestino())
                 V_r1_left.extend(V_r1_right)
@@ -632,14 +640,13 @@ class Solucion(Grafo):
                 r1.setCapacidad(cap_r1)
                 r2.setCapacidad(cap_r2)
                 
-                print("r1 ahora: "+str(r1))
-                print("r2 ahora: "+str(r2))
-                print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
-                
                 if(cap_r1 > self.__capacidadMax or cap_r2 > self.__capacidadMax):
-                    print("Sol no factible, repito proceso")
+                    #print("Sol no factible, repito proceso")
                     rutas = []
                 else:
+                    print("r1 ahora: "+str(r1))
+                    print("r2 ahora: "+str(r2))
+                    print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
                     print("Encontré una solución factible")
                     sol_factible = True
             #4-opt en la misma ruta. Condicion: Deben haber 4 aristas de separacion entre a y b, si no se realiza 2-opt
@@ -652,7 +659,7 @@ class Solucion(Grafo):
                 #   (6,3)   (6,b)
                 #   (3,7)   (b,7)
                 r = rutas[ind_rutas[0]]
-                print("Ruta antes: "+str(r))
+                #print("Ruta antes: "+str(r))
                 V_r = r.getV()
                 V_r.append(Vertice(1,0))
                 #Descompongo la ruta
@@ -706,8 +713,8 @@ class Solucion(Grafo):
                     DROP.append(A_r_drop1)
                     DROP.append(A_r_drop4)
 
-                print("DROP: "+str(DROP))
-                print("ADD: "+str(ADD))
+                #print("DROP: "+str(DROP))
+                #print("ADD: "+str(ADD))
 
                 V_r_left.append(A_r_drop4.getOrigen())
                 V_r_left.extend(V_r_middle)
@@ -717,12 +724,12 @@ class Solucion(Grafo):
                 
                 cap = r.cargarDesdeSecuenciaDeVertices(V_r)
                 r.setCapacidad(cap)
-                print("ruta ahora: "+str(r))
-                print("capacidad: ",cap)
                 if(cap > self.__capacidadMax):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
+                    print("ruta ahora: "+str(r))
+                    print("capacidad: ",cap)
                     print("Encontré una solución factible")
                     sol_factible = True 
         #Fin del while (se encontro una solucion factible)

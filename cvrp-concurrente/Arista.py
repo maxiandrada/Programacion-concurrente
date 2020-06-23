@@ -39,7 +39,7 @@ class Arista():
 
     def __eq__(self, A):
         eq = ((self.getOrigen() == A.getOrigen()) and (self.getDestino() == A.getDestino())) or ((self.getOrigen() == A.getDestino()) and (self.getDestino() == A.getOrigen()))
-        return ((self.__class__ == A.__class__) & eq & (self.getPeso() == A.getPeso()))
+        return ((self.__class__ == A.__class__) and eq)
 
     def __ne__(self, A):
         neq = self.getOrigen() != A.getOrigen() and self.getDestino() != A.getDestino() and self.getOrigen() != A.getDestino() and self.getDestino() != A.getOrigen()
