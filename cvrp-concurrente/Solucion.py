@@ -333,7 +333,7 @@ class Solucion(Grafo):
                     sol_factible = True
         #Fin del while (se encontro una solucion factible)
         
-        return rutas, ADD, DROP
+        return rutas, ADD[:1], DROP
 
     def swap_3opt(self, lista_permitidos, ind_random, rutas_orig, demandas):
         sol_factible = False
@@ -426,12 +426,12 @@ class Solucion(Grafo):
                     print("Sol no factible, repito proceso")
                     rutas = []
                 else:
-                    print("DROP: "+str(DROP))
-                    print("ADD: "+str(ADD))
+                    #print("DROP: "+str(DROP))
+                    #print("ADD: "+str(ADD))
+                    print("Encontré una solución factible")
                     print("r1 ahora: "+str(r1))
                     print("r2 ahora: "+str(r2))
-                    print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
-                    print("Encontré una solución factible")
+                    #print("cap_r1: %f       cap_r2: %f      cap_max: %f" %(cap_r1, cap_r2, self.__capacidadMax))
                     sol_factible = True
             
             else:
@@ -479,8 +479,8 @@ class Solucion(Grafo):
                 if(len(V_r_middle)>1):
                     ADD.append(A_r_add2)
                     DROP.append(A_r_drop3)
-                else:
-                    print("Se aplica 2-opt ya que solo existe una arista intermedia para hacer el swap")
+                #else:
+                #    print("Se aplica 2-opt ya que solo existe una arista intermedia para hacer el swap")
 
                 #print("DROP: "+str(DROP))
                 #print("ADD: "+str(ADD))
@@ -502,7 +502,7 @@ class Solucion(Grafo):
                     sol_factible = True 
         #Fin del while (se encontro una solucion factible)
         
-        return rutas, ADD, DROP
+        return rutas, ADD[:1], DROP
             
     def swap_4opt(self, lista_permitidos, ind_random, rutas_orig, demandas):
         sol_factible = False
@@ -554,14 +554,14 @@ class Solucion(Grafo):
                 V_r1 = r1.getV()
                 V_r1.append(Vertice(1,0))
                 if(V_origen == V_r1[-2]):
-                    print("El vertice origen de la ruta 1 esta al final del recorrido, se invierte los vertices")
+                    #print("El vertice origen de la ruta 1 esta al final del recorrido, se invierte los vertices")
                     V_r1 = V_r1[::-1]
                     ind_A[0] = 1
                 
                 V_r2 = r2.getV()
                 V_r2.append(Vertice(1,0))
                 if(V_destino == V_r2[-2]):
-                    print("El vertice destino de la ruta 2 esta al final del recorrido, se invierte los vertices")
+                    #print("El vertice destino de la ruta 2 esta al final del recorrido, se invierte los vertices")
                     V_r2 = V_r2[::-1]
                     ind_A[1] = 0
                 
@@ -725,13 +725,13 @@ class Solucion(Grafo):
                 cap = r.cargarDesdeSecuenciaDeVertices(V_r)
                 r.setCapacidad(cap)
                 if(cap > self.__capacidadMax):
-                    print("Sol no factible, repito proceso")
+                    #print("Sol no factible, repito proceso")
                     rutas = []
                 else:
                     print("ruta ahora: "+str(r))
                     print("capacidad: ",cap)
-                    print("Encontré una solución factible")
+                    print("Encontramos una solución factible")
                     sol_factible = True 
         #Fin del while (se encontro una solucion factible)
         
-        return rutas, ADD, DROP
+        return rutas, ADD[:1], DROP
