@@ -2,7 +2,7 @@ from Vertice import Vertice
 from Arista import Arista
 from Grafo import Grafo
 from Solucion import Solucion
-from Tabu import Tabu
+from Tabu import Tabu, ListaTabu
 import random 
 import sys
 import re
@@ -294,7 +294,7 @@ class CVRP:
 
     ####### Empezamos con Tabu Search #########
     def tabuSearch(self):
-        lista_tabu = []         #Tiene objetos de la clase Tabu
+        lista_tabu = ListaTabu()         #Tiene objetos de la clase Tabu
         lista_permitidos = []   #Tiene objetos de la clase arista
         #Sol_Actual = copy.deepcopy(self._S)
         
@@ -307,14 +307,23 @@ class CVRP:
         alfaMin = 1
         alfaMax = 6400
 
+        tenureMin = 5
+        tenureMax = 10
+        
+        nd = 15 * self._G.getGrado()
+        nh = self._G.getGrado()
+        betaD = 1.75
+
         self.crearGrafoDispercion() 
 
-        tiempoIni = time()
-        tiempoIniNoMejora = tiempoIni
         tiempoMax = float(self.__tiempoMaxEjec*60)
         
         
         #print(self.GD)
+        cantidadMaximaIteraciones = 10
+        iteracion = 0
+        while(iteracion < cantidadMaximaIteraciones):
+            
 
 
 

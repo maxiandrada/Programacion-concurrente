@@ -1,4 +1,3 @@
-
 class Tabu:
     def __init__(self, E, T):
         self.__elemento = E 
@@ -30,3 +29,39 @@ class Tabu:
     
     def incrementaT(self):
         self.__tenure = self.__tenure +1
+
+class ListaTabu():
+    def __init__(self):
+        self.__lista = []
+    
+    def addTabu(self,E):
+        self.__lista.append(E)
+        
+    def removeTabu(self,E):
+        self.__lista.remove(E)
+    def getLista(self):
+        return self.__lista
+    def setLista(self, L):
+        self.__lista = L
+
+    def __len__(self):
+        return len(self.__lista)
+        
+    def decrementaTenure(self):
+        i=0
+        while (i < len(self)):
+            elemTabu=self[i]
+            if(elemTabu.getTenure()!=-1):
+                elemTabu.decrementaT()
+            if(elemTabu.getTenure()==0):
+                self.pop(i)
+                i-=1
+            i+=1
+
+    def pop(self,index):
+        return self.__lista.pop(index)
+
+    def __getitem__(self,key):
+        pass
+    
+    
