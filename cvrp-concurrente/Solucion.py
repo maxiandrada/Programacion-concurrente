@@ -114,7 +114,7 @@ class Solucion():
             self.__costoTotal = S.getCostoTotal()
 
         elif(isinstance(S,Grafo)):
-            if(D!=None and NV!= None and C!= None):
+            if(not D is None and not NV is None and not C is None):
                 self.__matriz = S.getMatriz()
                 self.__grado = len(self.__matriz)
                 self.__costoTotal = S.getCostoAsociado()
@@ -132,10 +132,7 @@ class Solucion():
         if(not S is None and not I is None):
             self.__rutas = []
             self.__costoTotal = 0
-            self.__capacidad = C
-            self.__nroVehiculos = NV
-            self.__demanda = D
-            self.rutasIniciales(I,NV,D,C)
+            self.rutasIniciales(I,self.__nroVehiculos,self.__demanda,self.__capacidad)
             #self.rutaDePrueba()
             self.crearDictBusqueda()
             self.mostrarDictBusqueda()
@@ -266,7 +263,7 @@ class Solucion():
         if(strSolInicial==0):
             secuenciaInd = random.sample( range(1,len(self.getV())), len(self.getV())-1)
             self.cargar_secuencia(secuenciaInd, nroVehiculos, demanda, capacidad, rutas)
-            self.__rutas 
+            self.__rutas = rutas
         elif(strSolInicial==1):
             # secuenciaInd = self.solInicial_VecinoCercano(nroVehiculos, capacidad,demanda,rutas)
             # print("secuencia de indices de los vectores: "+str(secuenciaInd))
@@ -283,14 +280,19 @@ class Solucion():
 
     def penalizarSolucion(self,alfa):
         capacMax = self.__capacidad
+        print("capac:"+ str(capacMax))
         dem = self.__demanda
         costoActual = self.__costoTotal
+        print(dem)
         sumaDemRutas = []
         for Rr in self.getRutas():
             suma = 0
             for v in Rr.getV():
+                print("-----> ",dem[v.getValue()-1])
                 suma += dem[v.getValue()-1]
-            suma -= capacMax
+            print(suma)
+            suma = suma - capacMax
+            print(suma)
             sumaDemRutas.append(suma)
         maxSum = max(sumaDemRutas)
         print(sumaDemRutas)

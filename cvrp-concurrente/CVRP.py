@@ -304,13 +304,11 @@ class CVRP:
         cond_3opt = False
         cond_4opt = False
         
-        
+        alfaMin = 1
+        alfaMax = 6400
+
         self.crearGrafoDispercion() 
-        F1 = Solucion(self._S)
-        F2 = Solucion(self._S)
-        F2.penalizarSolucion(1000)
-        print(F1)
-        print(F2)
+
         tiempoIni = time()
         tiempoIniNoMejora = tiempoIni
         tiempoMax = float(self.__tiempoMaxEjec*60)
@@ -710,5 +708,5 @@ if __name__ == "__main__":
     
     #Grafo(arg.M)
     #print(arg.M)
-    cvrp = CVRP(arg.M,arg.D,arg.NV,arg.C,arg.F,arg.I,arg.intercambios,2,0,0,4,arg.O,2)
+    cvrp = CVRP(arg.M,arg.D,arg.NV,arg.C,arg.F,arg.I,arg.intercambios,2,0,0,4,arg.O,1.5)
 
