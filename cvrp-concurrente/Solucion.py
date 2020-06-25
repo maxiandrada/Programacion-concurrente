@@ -112,6 +112,9 @@ class Solucion():
             self.__nroVehiculos = S.getNroVehiculos()
             self.__rutas = copy.deepcopy(S.getRutas())
             self.__costoTotal = S.getCostoTotal()
+            if(I is None):
+                self.crearDictBusqueda()
+
 
         elif(isinstance(S,Grafo)):
             if(not D is None and not NV is None and not C is None):
@@ -137,8 +140,11 @@ class Solucion():
             self.crearDictBusqueda()
             self.mostrarDictBusqueda()
             self.setCostoTotal()
+            self.__tipoSolucionIni = I
+        self.__costoPenalizado = 0
 
-
+    def getTipoSolucionInicial(self):
+        return self.__tipoSolucionIni
 
     def crearDictBusqueda(self):
         self.__dict = {}
@@ -152,6 +158,13 @@ class Solucion():
     def mostrarDictBusqueda(self):
         print(self.__dict)
 
+    def getCostoPenalizado(self):
+        return self.__costoPenalizado
+
+    def setCostoPenalizado(self,cp):
+        self.__costoPenalizado = cp
+
+
     #Actualiza todos los vértices de la ruta
     def actualizarDictBusqueda(self,r1):
         V = self.__rutas[r1].getV()
@@ -163,7 +176,7 @@ class Solucion():
         if(isinstance(v,int)):
             return self.__dict.get(v)     
         elif(isinstance(v,Vertice)):
-            return self.__dict.get(v)
+            return self.__dict.get(v.getValue())
 
     def getRutas(self):
         return self.__rutas
@@ -227,6 +240,7 @@ class Solucion():
         for i in range(0, len(self.__rutas)):
             ret += "\nRuta del vehiculo "+str(i+1)+":\n"+str(self.__rutas[i]) + "\n"
         ret += "\nCosto total: "+str(self.getCostoTotal())
+        ret += "\nCosto Penalizado: "+str(self.getCostoPenalizado())
         return ret
 
     def setCostoTotal(self,costo=None):
@@ -280,23 +294,18 @@ class Solucion():
 
     def penalizarSolucion(self,alfa):
         capacMax = self.__capacidad
-        print("capac:"+ str(capacMax))
         dem = self.__demanda
         costoActual = self.__costoTotal
-        print(dem)
         sumaDemRutas = []
         for Rr in self.getRutas():
             suma = 0
+            #print(Rr.getV())
             for v in Rr.getV():
-                print("-----> ",dem[v.getValue()-1])
                 suma += dem[v.getValue()-1]
-            print(suma)
             suma = suma - capacMax
-            print(suma)
             sumaDemRutas.append(suma)
         maxSum = max(sumaDemRutas)
-        print(sumaDemRutas)
-        self.setCostoTotal(costoActual + alfa*maxSum) 
+        self.setCostoPenalizado(costoActual + alfa*maxSum) 
 
     def cargar_secuencia(self, secuencia, nroVehiculos, demanda, capacidad, rutas):
         secuenciaInd = secuencia
@@ -342,8 +351,6 @@ class Solucion():
             self.__rutas.append(S)
         
         return recorrido
-
-
 
 
     def vecinoMasCercano(self, pos, visitados, acum_demanda, demanda, capacidad):
@@ -514,9 +521,102 @@ class Solucion():
         self.actualizarDictBusqueda(1)
         self.setCostoTotal()
 
-
+    def esUltimo(self,r1,v1):
+        if(isinstance(v1,int)):
+            return v1+1 == len(self[r1])
+        elif(isinstance(v1,Vertice)):
+            return v1.getValue()+1 == len(self[r1])
     #PENDIENTEEEEE
     def customerSwap(self, v1,v2):
+        indV2 = self.buscar(v2)  #igual pero de v2
+        indV1 = self.buscar(v1) #Par ordenado (r,i) donde r es el índice de la ruta y de la arista de v1 
+        condV2EsDeposito = False
+        if(isinstance(v2,Vertice)):
+            if(v2.getValue()==1):
+                condV2EsDeposito = True
+        elif(isinstance(v2,int)):
+            if(v2==1):
+                condV2EsDeposito = True
+        if(isinstance(v1,Vertice) ):
+            if(v1.getValue()==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+        elif(isinstance(v1,int)):
+            if(v1==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+
+        if(condV2EsDeposito == False):
+            r2 = indV2[0]
+            c1 = indV1[1]
+            c2 = indV2[1]
+
+            a = self[r1].getA()[c1]  
+            b = self[r2].getA()[c2]
+            anteriorB = self[r2].getA()[c2-1]
+            if(self.esUltimo(r1,c1) or self.esUltimo(r2,c2)):
+                    
+                anteriorB.setDestino(b.getDestino())   
+                b.setDestino(a.getDestino())
+                a.setDestino(b.getOrigen())
+
+                anteriorB.setPeso(self[r1][anteriorB.getOrigen()][anteriorB.getDestino()])
+                b.setPeso(self[r1][b.getOrigen()][b.getDestino()])
+                a.setPeso(self[r1][a.getOrigen()][a.getDestino()])
+
+                if(self.esUltimo(r2,c2)):
+                    self[r2].getA().remove(self[r2].getA()[c2])
+                    self[r1].getA().insert(c1+1,b)
+                else:
+                    self[r1].getA().insert(c1+1,b)
+                    self[r2].getA().remove(b)
+
+                # print("r1: ",self[r1].getA())
+                # print("r2: ",self[r2].getA())
+                self[r1].cargarDesdeSecuenciaDeAristas(self[r1].getA())
+                self[r2].cargarDesdeSecuenciaDeAristas(self[r2].getA()) 
+                self.actualizarDictBusqueda(r1)
+                self.actualizarDictBusqueda(r2)
+            else:
+                siguienteA = self[r1].getA()[c1+1]
+                siguienteB = self[r2].getA()[c2+1]
+                anteriorB.setDestino(a.getDestino())
+                b.setDestino(siguienteA.getDestino())
+                a.setDestino(b.getOrigen())
+                siguienteA.setDestino(siguienteB.getOrigen())
+
+
+
+                if(self[r1].getA()[c1+1]!=self[r2].getA()[c2]):
+                    self[r2].getA().remove(b)
+                    self[r1].getA().remove(siguienteA)
+
+                    a.setPeso(self[r1][a.getOrigen()][a.getDestino()])
+                    anteriorB.setPeso(self[r1][anteriorB.getOrigen()][anteriorB.getDestino()])
+                    siguienteA.setPeso(self[r1][siguienteA.getOrigen()][siguienteA.getDestino()])
+                    b.setPeso(self[r1][b.getOrigen()][b.getDestino()])  
+
+                    self[r1].getA().insert(c1+1,b)
+                    self[r2].getA().insert(c2,siguienteA) 
+
+                    self[r1].cargarDesdeSecuenciaDeAristas(self[r1].getA())
+                    self[r2].cargarDesdeSecuenciaDeAristas(self[r2].getA()) 
+                    self.actualizarDictBusqueda(r1)
+                    self.actualizarDictBusqueda(r2)
+                else:
+                    a.setPeso(self[r1][a.getOrigen()][a.getDestino()])
+                    anteriorB.setPeso(self[r1][anteriorB.getOrigen()][anteriorB.getDestino()])
+                    siguienteA.setPeso(self[r1][siguienteA.getOrigen()][siguienteA.getDestino()])
+                    b.setPeso(self[r1][b.getOrigen()][b.getDestino()])
+                    self[r1].cargarDesdeSecuenciaDeAristas(self[r1].getA())
+                    self.actualizarDictBusqueda(r1)
+
+            self.setCostoTotal()
+    
+       
+    def customerSwap2(self, v1,v2):
         indV1 = self.buscar(v1) #Par ordenado (r,i) donde r es el índice de la ruta y de la arista de v1 
         indV2= self.buscar(v2)  #igual pero de v2
 
@@ -531,9 +631,9 @@ class Solucion():
         siguienteB = self[r2].getA()[c2+1]
         anteriorB = self[r2].getA()[c2-1]
 
-        anteriorB.setDestino(a.getDestino())
-        b.setDestino(siguienteA.getDestino())
-        a.setDestino(b.getOrigen())
+        anteriorB.setDestino(a.getOrigen())
+        b.setDestino(a.getDestino())
+        a.setDestino(siguienteA.getOrigen())
         siguienteA.setDestino(siguienteB.getOrigen())
 
         self[r1].getA().remove(siguienteA)
@@ -554,8 +654,7 @@ class Solucion():
 
         self.actualizarDictBusqueda(0)
         self.actualizarDictBusqueda(1)
-        self.setCostoTotal()
-       
+        self.setCostoTotal()       
 
     def solucionToList(self):
         rutas =[]
@@ -566,6 +665,167 @@ class Solucion():
             rutas.append(ruta)
         return rutas
 
+    def evaluarCapacidad(self,v1,v2,alfa):
+        indV2 = self.buscar(v2)  #igual pero de v2
+        indV1 = self.buscar(v1) #Par ordenado (r,i) donde r es el índice de la ruta y de la arista de v1 
+        
+        if(isinstance(v1,Vertice) ):
+            if(v1.getValue()==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+        elif(isinstance(v1,int)):
+            if(v1==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+
+        r2 = indV2[0]
+        c1 = indV1[1]
+        c2 = indV2[1]
+
+        dem = self.getDemanda()
+        if(r1 != r2):
+            cr1 = copy.deepcopy(self[r1].getV())
+            cr2 = copy.deepcopy(self[r2].getV())
+            b = cr2[c2]
+            if(self.esUltimo(r1,c1)):
+                cr1.insert(0,b) 
+                cr2.remove(b)
+            else:
+                sigA = cr1[c1+1]
+                cr2.remove(b)
+                cr2.insert(0,sigA)
+                cr1.insert(0,b)
+                cr1.remove(sigA)
+            rutas = [self.getRutas()[r] for r in range(len(self.getRutas())) if r != r1 and r!=r2]
+            rutas.insert(r1,cr1)
+            rutas.insert(r2,cr2)
+
+        else:
+            rutas = self.getRutas()
+
+        sumaDemRutas=[]
+        capacMax=self.getCapacidad()
+        for Rr in rutas:
+            suma = 0
+            if isinstance(Rr,Ruta):
+                for v in Rr.getV():
+                    suma += dem[v.getValue()-1]
+                suma = suma - capacMax
+                sumaDemRutas.append(suma)
+            elif isinstance(Rr,list):
+                for v in Rr:
+                    suma += dem[v.getValue()-1]
+                suma = suma - capacMax
+                sumaDemRutas.append(suma)
+        maxSum = max(sumaDemRutas)
+
+        return maxSum*alfa
+
+    def evaluarCostoSwapCustomer(self,v1,v2):
+        indV2 = self.buscar(v2)  #igual pero de v2
+        indV1 = self.buscar(v1) #Par ordenado (r,i) donde r es el índice de la ruta y de la arista de v1 
+
+
+        condV2EsDeposito = False
+        if(isinstance(v2,Vertice)):
+            if(v2.getValue()==1):
+                condV2EsDeposito = True
+        elif(isinstance(v2,int)):
+            if(v2==1):
+                condV2EsDeposito = True
+
+        if(isinstance(v1,Vertice)):
+            if(v1.getValue()==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+        elif(isinstance(v1,int)):
+            if(v1==1):
+                r1=indV2[0]
+            else:
+                r1 = indV1[0]
+
+        if(condV2EsDeposito == False):
+            r2 = indV2[0]
+            c1 = indV1[1]
+            c2 = indV2[1]
+
+            a = self[r1].getA()[c1]  
+            b = self[r2].getA()[c2]
+            anteriorB = self[r2].getA()[c2-1]
+
+            costoSwap = 0
+            costoActual = self.getCostoTotal()  
+            if(self.esUltimo(r1,c1) or self.esUltimo(r2,c2)):
+                costoActual -= self[r1][anteriorB.getOrigen()][anteriorB.getDestino()]
+                costoActual -= self[r1][b.getOrigen()][b.getDestino()]
+                costoActual -= self[r1][a.getOrigen()][a.getDestino()]
+                costoSwap += self[r1][anteriorB.getOrigen()][b.getDestino()]   
+                costoSwap += self[r1][b.getOrigen()][a.getDestino()]
+                costoSwap += self[r1][a.getOrigen()][b.getOrigen()]
+            else:
+                siguienteA = self[r1].getA()[c1+1]
+                siguienteB = self[r2].getA()[c2+1]
+                # print("r1: ",r1,"c1: ",c1)
+                # print("r2: ",r2,"c2: ",c2)
+                costoActual -= self[r1][anteriorB.getOrigen()][anteriorB.getDestino()]
+                costoActual -= self[r1][b.getOrigen()][b.getDestino()]
+                costoActual -= self[r1][a.getOrigen()][a.getDestino()]
+                costoActual -= self[r1][siguienteA.getOrigen()][siguienteA.getDestino()]
+                costoSwap += self[r1][anteriorB.getOrigen()][a.getDestino()]
+                costoSwap += self[r1][b.getOrigen()][siguienteA.getDestino()]
+                costoSwap += self[r1][a.getOrigen()][b.getOrigen()]
+                costoSwap += self[r1][siguienteA.getOrigen()][siguienteB.getOrigen()]
+
+        if(condV2EsDeposito == False):
+            return costoActual+costoSwap
+        else:
+            return float("inf")
+
+
+    def buscarMejorMovimiento(self,listaA,q,alfa,costoActual=None,listaTabu=None):
+        factibles = []
+        for f in listaA:
+            if(self.evaluarCapacidad(f.getOrigen(),f.getDestino(),alfa)<=0):
+                factibles.append(f)
+        if(costoActual is None and listaTabu is None): #Este control es por si se quiere usar listaTabu o no para buscar
+            if factibles != []:
+                muestra = random.sample(factibles,int(len(factibles)*q))
+                if(muestra==[]):
+                    muestra = random.sample(factibles,1)[0]
+                else:
+                    mejor = muestra[0] 
+                for a in muestra[1:]:
+                    #print("(%d,%d)=%f"%(a.getOrigen().getValue(),a.getDestino().getValue(),self.evaluarCostoSwapCustomer(a.getOrigen(),a.getDestino())))
+                    evaluacionActual = self.evaluarCostoSwapCustomer(a.getOrigen(),a.getDestino())
+                    evaluacionMejor = self.evaluarCostoSwapCustomer(mejor.getOrigen(),mejor.getDestino())
+                    if(evaluacionActual<evaluacionMejor):
+                        mejor = a
+                return mejor
+            else: 
+                return False
+        else:
+            if factibles != []:
+                muestra = random.sample(factibles,int(len(factibles)*q))
+                mejor = muestra[0]
+                for a in muestra[1:]:
+                    #print("(%d,%d)=%f"%(a.getOrigen().getValue(),a.getDestino().getValue(),self.evaluarCostoSwapCustomer(a.getOrigen(),a.getDestino())))
+                    evaluacionActual = self.evaluarCostoSwapCustomer(a.getOrigen(),a.getDestino())
+                    evaluacionMejor = self.evaluarCostoSwapCustomer(mejor.getOrigen(),mejor.getDestino())
+                    if(evaluacionActual<evaluacionMejor):
+                        if(a in listaTabu): 
+                            if(evaluacionActual<costoActual): #Si pertenece a la listaTabu, pero mejora la solución se acepta el movimiento.
+                                mejor = a
+                        else:
+                            mejor = a
+                return mejor
+            else:
+                return False
+
+
+
 
 if __name__ == "__main__":
     
@@ -574,11 +834,20 @@ if __name__ == "__main__":
     G = Grafo(arg.M)
     #D demanda; NV nro de vehículos; C capacidad. G: Grafo, podría ser una matriz también
     S = Solucion(G,arg.D,arg.NV,arg.C,arg.I)
+    # print(S[0])
+    # print(S[1])
     print(S)
-    g1 = Grafico(arg.coordenadas,S.solucionToList(),arg.nombreArchivo)
-    S.customerSwap(3,8)
+    #print("evaluación: ", S.evaluarCapacidad(9,7))
+    
+    S.customerSwap(9,7)
+    S.penalizarSolucion(1)
+    # print(S[0])
+    # print(S[1])
     print(S)
-    g2 = Grafico(arg.coordenadas,S.solucionToList(),arg.nombreArchivo)
+    #S.buscarMejorMovimiento()
+    
+    #g1 = Grafico(arg.coordenadas,S.solucionToList(),arg.nombreArchivo)
+    #g2 = Grafico(arg.coordenadas,S.solucionToList(),arg.nombreArchivo)
 
 
 
@@ -607,5 +876,8 @@ if __name__ == "__main__":
     # print(g[None][None])
     # print(g[2][5])  #6
     # print(g[v1][3]) #7
+    # print(g[2][v2]) #4
+    # print(g[v1][v2])#5 
+
     # print(g[2][v2]) #4
     # print(g[v1][v2])#5 

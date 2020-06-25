@@ -201,7 +201,7 @@ class Grafo:
             rV.append(Vertice(j+1))
         
         for i in range(0,len(seq)-1):
-            dist = self.getMatriz()[rV.index(seq[i])][rV.index(seq[i+1])] #Referencias en la matriz
+            dist = self[seq[i]][seq[i+1]] #Referencias en la matriz
             self.getA().append(Arista(seq[i], seq[i+1], dist))
             costo+= dist
         
@@ -210,7 +210,8 @@ class Grafo:
         a = Arista(origenLast,destinoLast,self[origenLast][destinoLast])
         
         self._A.append(a)
-        self._costoAsociado = costo + self.getMatriz()[rV.index(seq[len(seq)-1])][rV.index(seq[0])]
+
+        self._costoAsociado = costo + self[origenLast][destinoLast]
 
     def cargarDesdeSecuenciaDeAristas(self,seq):
         self._A = seq
@@ -219,8 +220,6 @@ class Grafo:
         for a in seq:
             self._V.append(a.getOrigen())
             costo += a.getPeso()
-
-
 
         origenLast= seq[len(seq)-1].getDestino()
         if(origenLast!=Vertice(1)):
@@ -231,11 +230,13 @@ class Grafo:
         self._costoAsociado = costo
 
     def setCosto(self, costo=None):
-        ret = 0
-        for i in range(len(self.getV())-1):
-            ret += self[self.getV()[i]][self.getV()[i+1]]
+        suma = 0
+        for a in self.getA():
+            suma += a.getPeso()
 
-        self._costoAsociado = ret
+
+        self._costoAsociado = suma
+
 
     def incrementaFrecuencia(self):
         for x in range(0,len(self.getA())):
@@ -282,7 +283,7 @@ class Grafo:
 #[None][None] --> Retorna toda la lista :D 
     def __getitem__(self,key=None):
         if(key is None):
-            return FilaMatrizDistancia(self.getMatriz(),self.getA(),True,key)
+            return FilaMatrizDistancia(self.getMatriz(),self.getA(),Te,key)
         else:
             if(isinstance(key,Vertice)):
                 return FilaMatrizDistancia(self.getMatriz()[key.getValue()-1],self.getA(),False,key)

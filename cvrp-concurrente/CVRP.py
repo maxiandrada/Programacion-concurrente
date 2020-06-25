@@ -32,8 +32,7 @@ class CVRP:
         self.__tenureDROP =  tDROP
         self.__tenureMaxDROP = int(tDROP*1.7)
         self.beta = beta
-        #self.__txt = clsTxt(str(nombreArchivo))
-        self.__txt = None
+        self.__txt = clsTxt(str(archivo))
         self.__tiempoMaxEjec = float(tiempo)
         self.__frecMatriz = []
         self.__nroVehiculos = nroV
@@ -284,7 +283,7 @@ class CVRP:
         A = self._G.getA()
         self.GD.setV(self._G.getV())
         umbral = self.umbralGranularidad
-        print("Umbral de Granularidad: "+str(self.umbralGranularidad))
+        #print("Umbral de Granularidad: "+str(self.umbralGranularidad))
         for a in A:
             if(a.getPeso()<umbral or (a.getOrigen()==Vertice(1)and a.getDestino()!=Vertice(1))):
                 self.GD.getA().append(a)
@@ -299,32 +298,87 @@ class CVRP:
         #Sol_Actual = copy.deepcopy(self._S)
         
         #Atributos banderas utilizados
-        condOptim = False   #En caso de que encontre uno mejor que el optimo lo guardo en el archivo txt
-        condTS_Frecuencia = False #Empezamos a utilizar las aristas mas frecuentadas
-        cond_3opt = False
-        cond_4opt = False
-        
+        condNoMejora = False
         alfaMin = 1
         alfaMax = 6400
-
+        alfa = 100
         tenureMin = 5
         tenureMax = 10
         
         nd = 15 * self._G.getGrado()
         nh = self._G.getGrado()
-        betaD = 1.75
-
+        betaD = 1.7 #Controla la diversificación
+        betaOriginal = self.beta
         self.crearGrafoDispercion() 
 
         tiempoMax = float(self.__tiempoMaxEjec*60)
-        
-        
-        #print(self.GD)
-        cantidadMaximaIteraciones = 10
+        noFactibles = 0
+        solucionActual = Solucion(self._S)
+        solucionOptima = Solucion(self._S)
+        solucionOptima.penalizarSolucion(alfa)
+        cantidadMaximaIteraciones = 10000
+        subIteracion = 0
+        iteracionDispercion = 0
         iteracion = 0
+        q = 0.40 #Controla la intensificación
         while(iteracion < cantidadMaximaIteraciones):
-            
+            #print("Iteración: ",iteracion)
+            #print("subIteración: ",subIteracion)
+            #lista_permitidos = lista_tabu.getListaPermitidos(self.GD.getA())
+            print("umbral ",self.umbralGranularidad)
+            solucionActual.penalizarSolucion(alfa)
+            if condNoMejora:
+                iteracionDispercion +=1
+                if(iteracionDispercion == nh):
+                    print("Vuelve al grafo con beta ",betaOriginal)
+                    condNoMejora = False
+                    subIteracion = 0
+                    self.beta = betaOriginal
+                    self.setUmbral()
+                    self.crearGrafoDispercion()
+                    q=q/2
+                    print("Se baja el q a: ",q)
+            else:
+                if(subIteracion == nd): 
+                    print("No mejoró, se crea un nuevo grafo de disperción con beta",betaD," por ",nh,"iteraciones")
+                    condNoMejora = True
+                    self.beta = betaD
+                    iteracionDispercion = 0
+                    q = q*2
+                    print("Se sube el q a: ",q)
+                    self.setUmbral()
+                    self.crearGrafoDispercion()
+                else:
+                    if(iteracion % 2*self._G.getGrado()==0):
+                        self.setUmbral()
+                        self.crearGrafoDispercion() 
 
+            mejorMovimiento = solucionActual.buscarMejorMovimiento(self.GD.getA(),q,alfa,solucionActual.getCostoTotal(),lista_tabu)
+
+            if(isinstance(mejorMovimiento, bool)):
+               noFactibles +=1
+               print("No Factibles: ",noFactibles)
+            else:
+                solucionActual.customerSwap(mejorMovimiento.getOrigen(),mejorMovimiento.getDestino())
+                solucionActual.penalizarSolucion(alfa)
+                tenure = random.sample(range(tenureMin,tenureMax+1),1)[0]
+            
+            lista_tabu.addTabu(mejorMovimiento,tenure)
+
+
+            if(solucionActual.getCostoPenalizado()<solucionOptima.getCostoPenalizado()):
+                solucionOptima = Solucion(solucionActual)
+                solucionOptima.penalizarSolucion(alfa)
+                print("Costo Nueva Solución optima encontrada: ",solucionActual.getCostoTotal())
+                print("Carga Solución optima encontrada: ",solucionActual.getCostoPenalizado())
+                subIteracion = 0
+                self.__txt.escribir("################################ " + str(iteracion) + " ####################################")
+                self.__txt.escribir(str(solucionOptima))
+            
+            #print(len(lista_tabu))
+            lista_tabu.decrementaTenure()
+            subIteracion +=1
+            iteracion+=1
 
 
 
@@ -712,10 +766,11 @@ class CVRP:
         tiempoFin = time()
         tiempoTotal = tiempoFin - tiempoIni
 
+
+
+
 if __name__ == "__main__":
     arg = Ingreso(sys.argv)
     
-    #Grafo(arg.M)
-    #print(arg.M)
-    cvrp = CVRP(arg.M,arg.D,arg.NV,arg.C,arg.F,arg.I,arg.intercambios,2,0,0,4,arg.O,1.5)
+    cvrp = CVRP(arg.M,arg.D,arg.NV,arg.C,arg.nombreArchivo,arg.I,arg.intercambios,2,0,0,4,arg.O,1.0)
 

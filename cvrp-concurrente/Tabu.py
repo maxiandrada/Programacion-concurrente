@@ -1,3 +1,4 @@
+from Arista import Arista
 class Tabu:
     def __init__(self, E, T):
         self.__elemento = E 
@@ -34,11 +35,21 @@ class ListaTabu():
     def __init__(self):
         self.__lista = []
     
-    def addTabu(self,E):
-        self.__lista.append(E)
+    def addTabu(self,E,T):
+        self.__lista.append(Tabu(E,T))
+
+    def __str__(self):
+        ret = ""
+        if(self.__lista == []):
+            ret = "Lista Tabú Vacía"
+        else:
+            for e in self.__lista:
+                ret += str(e)
+        return ret
         
     def removeTabu(self,E):
         self.__lista.remove(E)
+
     def getLista(self):
         return self.__lista
     def setLista(self, L):
@@ -62,6 +73,19 @@ class ListaTabu():
         return self.__lista.pop(index)
 
     def __getitem__(self,key):
-        pass
+        return self.__lista[key]
     
+    def __contains__(self,elem):
+        if(isinstance(elem,Arista)):
+            return Tabu(elem,0) in self.__lista
+        elif(isinstance(elem,Tabu)):
+            return elem in self.__lista
+
+    def getListaPermitidos(self,lista):
+        ret = []
+        for i in lista:
+            if(i not in self):
+                ret.append(i)
+        return ret    
+
     
