@@ -45,6 +45,8 @@ class Grafo:
         return self._V
     def getCostoAsociado(self):
         return self._costoAsociado
+    def setCostoAsociado(self, costoAsociado):
+        self._costoAsociado = costoAsociado
     def __lt__(self, otro):
         return (self._costoAsociado < otro.__costoAsociado and self.__class__ == otro.__class__)
     def __le__(self, otro):

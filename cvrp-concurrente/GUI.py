@@ -220,9 +220,12 @@ class Ventana(tk.Tk):
         lineas = archivo.readlines()
         
         #Busco la posiciones de...
-        indSeccionCoord = lineas.index("NODE_COORD_SECTION \n")
-        lineaEOF = lineas.index("DEMAND_SECTION \n")
-        
+        try:
+            indSeccionCoord = lineas.index("NODE_COORD_SECTION \n")
+            lineaEOF = lineas.index("DEMAND_SECTION \n")
+        except ValueError:
+            indSeccionCoord = lineas.index("NODE_COORD_SECTION\n")
+            lineaEOF = lineas.index("DEMAND_SECTION\n")
         #Linea optimo y nro de vehiculos
         lineaOptimo = [x for x in lineas[0:indSeccionCoord] if re.search(r"COMMENT+",x)][0]
         parametros = re.findall(r"[0-9]+",lineaOptimo)
@@ -279,8 +282,8 @@ class Ventana(tk.Tk):
                 dist = self.distancia(x1,y1,x2,y2)
                 
                 #Para el primer caso. Calculando la distancia euclidea entre si mismo da 0
-                if(dist == 0):
-                    dist = 999999999999 #El modelo no debería tener en cuenta a las diagonal, pero por las dudas
+                if(dist == 0 and float(coordRow[0])==float(coordCol[0])):
+                    dist = 999999999999
                 fila.append(dist)
 
             #print("Fila: "+str(fila))    
