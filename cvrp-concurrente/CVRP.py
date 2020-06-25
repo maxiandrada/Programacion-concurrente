@@ -94,13 +94,11 @@ class CVRP:
 
         return S
 
-
     def masVisitados(self):
         masVisitada = self.__S.getA()[0]
         for a in self.__S.getA()[1:]:
             if(a.getFrecuencia() > masVisitada.getFrecuencia()):
                 masVisitada = a
-
 
     #Umbral de granularidad: phi = Beta*(c/(n+k))
     #Beta = 1  parametro de dispersion. Sirve para modificar el grafo disperso para incluir la diversificación y la intensificación
@@ -261,6 +259,8 @@ class CVRP:
 
         print("\nMejor solucion obtenida: "+str(self.__rutas))
         tiempoTotal = time() - tiempoIni
+        print("\nTermino!! :)")
+        print("Tiempo total: " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg\n")
         self.__txt.escribir("\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Solucion Optima +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-")
         sol_ini = ""
         for i in range(0, len(self.__rutas)):
@@ -277,10 +277,8 @@ class CVRP:
         tiempoTotal = time()-tiempoEstancamiento
         self.__txt.escribir("Tiempo de estancamiento: "+str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg")
         self.__txt.imprimir()
-        
-        print("\nTermino!! :)")
-        print("Tiempo total: " + str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg\n")
-
+    
+       
     def getPermitidos(self, Aristas, lista_tabu, umbral, cond_Optimiz, solucion):
         ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
         AristasNuevas = []
