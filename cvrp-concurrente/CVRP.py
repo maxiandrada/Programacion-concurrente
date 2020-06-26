@@ -46,6 +46,7 @@ class CVRP:
             i
 
         self.escribirDatos()
+        self.__S.setCapacidadMax(self.__capacidadMax)
         self.__rutas = self.__S.rutasIniciales(self.__tipoSolucionIni, self.__nroVehiculos, self.__Demandas, self.__capacidadMax)
         self.__S = self.cargaSolucion(self.__rutas)
         
@@ -85,6 +86,7 @@ class CVRP:
             sol_ini+="\nRuta #"+str(i+1)+": "+str(self.__rutas[i].getV())
             sol_ini+="\nCosto asociado: "+str(self.__rutas[i].getCostoAsociado())+"      Capacidad: "+str(self.__rutas[i].getCapacidad())+"\n"
         sol_ini+="--> Costo total: "+str(costoTotal)+"          Capacidad total: "+str(cap)
+        #print(sol_ini)
         self.__txt.escribir(sol_ini)
         S.setA(A)
         S.setV(V)
@@ -145,7 +147,8 @@ class CVRP:
         iterac = 1
         umbral = self.calculaUmbral(self.__S.getCostoAsociado())
 
-        porcent_Estancamiento = 1.05
+        porc_Estancamiento = 1.05
+        porc_EstancamientoMax = 1.2
 
         cond_2opt = True
         cond_3opt = True
@@ -189,50 +192,55 @@ class CVRP:
             #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
             else:
                 nuevas_rutas, aristas_ADD, aristas_DROP, nuevo_costo = nueva_solucion.swap_4opt(lista_permitidos, ind_random, rutas_refer)
-            nuevo_costo = round(nuevo_costo, 3)
             tenureADD = self.__tenureADD
             tenureDROP = self.__tenureDROP
             
+            costo_sol = self.__S.getCostoAsociado()
             #Si encontramos una mejor solucion que la tomada como referencia
             if(nuevo_costo < solucion_refer.getCostoAsociado()):
-                nueva_solucion = self.cargaSolucion(nuevas_rutas)
                 cad = "\n+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+- Iteracion %d  +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-\n" %(iterac)
-                cad += "Lista tabu: "+str(lista_tabu)
-                self.__txt.escribir(cad)
+                nueva_solucion = self.cargaSolucion(nuevas_rutas)
+                solucion_refer = nueva_solucion
+                rutas_refer = nuevas_rutas
                 #Si la nueva solucion es mejor que la obtenida hasta el momento
                 if(nueva_solucion.getCostoAsociado() < self.__S.getCostoAsociado()):
                     tiempoTotal = time()-tiempoEstancamiento
                     cad += "\nLa solución anterior duró " + str(int(tiempoTotal/60))+"min "+ str(int(tiempoTotal%60))
                     cad += "seg    -------> Nuevo optimo local. Costo: "+str(nueva_solucion.getCostoAsociado())
-                    self.__txt.escribir(cad)
+                    cad += "\nrutas: "+str(nuevas_rutas)
                     print(cad)
                     self.__S = nueva_solucion
                     self.__rutas = nuevas_rutas
                     tiempoEstancamiento = time()
-                    iteracEstancamiento_Opt = 1
                     self.__beta = 1
                 else:
-                    cad += "Nuevo optimo. Costo: "+str(nueva_solucion.getCostoAsociado())
+                    cad += "\nNuevo optimo. Costo: "+str(nueva_solucion.getCostoAsociado())
                     print(cad)
-                solucion_refer = nueva_solucion
-                rutas_refer = nuevas_rutas
+                cad += "Lista tabu: "+str(lista_tabu)
+                self.__txt.escribir(cad)
                 umbral = self.calculaUmbral(nueva_solucion.getCostoAsociado())
                 tenureADD = self.__tenureMaxADD
                 tenureDROP = self.__tenureMaxDROP
                 cond_Optimiz = True
                 Aristas = Aristas_Opt
                 iteracEstancamiento = 1
-                porcent_Estancamiento = 1.05
+                iteracEstancamiento_Opt = 1
+                porc_Estancamiento = 1.05
+                porc_EstancamientoMax = 1.2
             #Si se estancó, tomamos la proxima solución peor que difiera un 5% del optimo como referencia
-            elif(nuevo_costo < self.__S.getCostoAsociado()*1.1 and (nuevo_costo > self.__S.getCostoAsociado()*porcent_Estancamiento) and (iteracEstancamiento>100)):
+            elif(nuevo_costo < costo_sol*porc_EstancamientoMax and nuevo_costo > costo_sol*porc_Estancamiento and iteracEstancamiento>100):
                 nueva_solucion = self.cargaSolucion(nuevas_rutas)
                 tiempoTotal = time()-tiempoEstancamiento
-                print("Se estancó durante %d min %d seg. Admitimos una solucion peor" %(int(tiempoTotal/60), int(tiempoTotal%60)))
-                self.__beta = 1.5
-                if(porcent_Estancamiento>=1.03):
-                    porcent_Estancamiento -= 0.01
+                print("Se estancó durante %d min %d seg. Admitimos una solucion peor para diversificar" %(int(tiempoTotal/60), int(tiempoTotal%60)))
+                self.__beta = 2
+                if(porc_EstancamientoMax < 1.3):
+                    porc_Estancamiento += 0.02
+                    porc_EstancamientoMax += 0.02
                 else:
-                    porcent_Estancamiento = 1.1
+                    print("reiniciamos la lista tabu")
+                    porc_Estancamiento = 1.05
+                    porc_EstancamientoMax = 1.2
+                    lista_tabu = []
                 umbral = self.calculaUmbral(nueva_solucion.getCostoAsociado())
                 solucion_refer = nueva_solucion
                 rutas_refer = nuevas_rutas
@@ -277,8 +285,8 @@ class CVRP:
         tiempoTotal = time()-tiempoEstancamiento
         self.__txt.escribir("Tiempo de estancamiento: "+str(int(tiempoTotal/60))+"min "+str(int(tiempoTotal%60))+"seg")
         self.__txt.imprimir()
-    
-       
+
+
     def getPermitidos(self, Aristas, lista_tabu, umbral, cond_Optimiz, solucion):
         ListaPermit = []           #Aristas permitidas de todas las aristas del grafo original
         AristasNuevas = []
