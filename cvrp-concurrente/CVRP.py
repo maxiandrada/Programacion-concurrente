@@ -77,8 +77,13 @@ class CVRP:
         cap = 0
         costoTotal = 0
         sol_ini = ""
-        for i in range(0, len(self.__rutas)):
-            s = rutas[i]
+        
+        for i in range(0, len(rutas)):
+            try:
+                s = rutas[i]
+            except ValueError:
+                print("i: "+str(i))
+                print("rutas: "+str(s))
             costoTotal += s.getCostoAsociado()
             cap += s.getCapacidad()
             A.extend(s.getA())
@@ -232,7 +237,7 @@ class CVRP:
                 nueva_solucion = self.cargaSolucion(nuevas_rutas)
                 tiempoTotal = time()-tiempoEstancamiento
                 print("Se estancó durante %d min %d seg. Admitimos una solucion peor para diversificar" %(int(tiempoTotal/60), int(tiempoTotal%60)))
-                self.__beta = 2
+                self.__beta = 1.5
                 if(porc_EstancamientoMax < 1.3):
                     porc_Estancamiento += 0.02
                     porc_EstancamientoMax += 0.02
@@ -240,7 +245,7 @@ class CVRP:
                     print("reiniciamos la lista tabu")
                     porc_Estancamiento = 1.05
                     porc_EstancamientoMax = 1.2
-                    lista_tabu = []
+                lista_tabu = []
                 umbral = self.calculaUmbral(nueva_solucion.getCostoAsociado())
                 solucion_refer = nueva_solucion
                 rutas_refer = nuevas_rutas
@@ -298,6 +303,7 @@ class CVRP:
                 for A_S in solucion.getA():
                     if A_S == EP:
                         pertS = True
+                        A_S.incFrecuencia()
                         break
                 if(not pertS and EP.getPeso() <= umbral):
                     AristasNuevas.append(EP)
@@ -334,3 +340,4 @@ class CVRP:
                 lista_tabu.pop(i)
                 i-=1
             i+=1
+    

@@ -1,7 +1,7 @@
 from Vertice import Vertice
 
 class Arista():
-    def __init__(self,origen,destino, peso):
+    def __init__(self,origen,destino,peso):
         self._origen = origen
         self._destino = destino
         self._peso = peso

@@ -163,6 +163,7 @@ class Solucion(Grafo):
         ind_verticeDestino = -1
         ind_rutaOrigen = -1
         ind_rutaDestino = -1
+        
         #arista_azar = (3,7)    => V_origen = 3 y V_destino = 7
         #Sol:   1-2-3-4-5                  1-6-7-8-9-10   
         #      (1,2)(2,3)(3,4)(4,5)(5,1)   (1,6)(6,7)(7,8)(8,9)(9,10)(10,1)
@@ -249,16 +250,6 @@ class Solucion(Grafo):
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
                 
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("A_r_add. Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-
                 ADD.append(A_r_add)
                 DROP.append(A_r1_drop)
                 DROP.append(A_r2_drop)
@@ -292,34 +283,15 @@ class Solucion(Grafo):
                 A_r_drop1 = r.getA()[ind_A[0]]
                 A_r_drop2 = r.getA()[ind_A[1]+1]
 
-                #Obtengo la otra arista ADD (27,21) o (21,27)
-                if(V_r_middle == []):
-                    print("V_r_middle[-1]")
-                    print(str(V_r_middle))    
-                    print("rutas: "+str(rutas))
-                    print("Arista azar: "+str(arista_ini))
-                    print("lisa permitidos: "+str(lista_permitidos))
                 V_origen = V_r_middle[-1]    # => (6, )
                 V_destino = V_r_right[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("A_r_add. Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-
+                
                 ADD.append(A_r_add)                
                 DROP.append(A_r_drop1)
                 DROP.append(A_r_drop2)
-                    
-                #print("DROP: "+str(DROP))
-                #print("ADD: "+str(ADD))
-
+                
                 V_r_left.append(r.getV()[ind_A[1]+1])
                 V_r_left.extend(V_r_middle)
                 V_r_left.extend(V_r_right)
@@ -385,16 +357,7 @@ class Solucion(Grafo):
                 V_destino = r1.getA()[ind_A[0]].getDestino()
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r1_add = Arista(V_origen, V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("distintas rutas. A_r1_add")
-                    print("rutas: "+str(rutas))
-                    print("Arista azar: "+str(arista_ini))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
+                
                 #Ruta 2
                 A_r2_left = r2.getA()[:ind_A[1]]
                 A_r2_drop = r2.getA()[ind_A[1]]
@@ -404,17 +367,7 @@ class Solucion(Grafo):
                 V_destino = r1.getA()[ind_A[0]-1].getDestino()
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r2_add = Arista(V_origen, V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("distintas rutas. A_r2_add")
-                    print("rutas: "+str(rutas))
-                    print("Arista azar: "+str(arista_ini))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-
+                
                 DROP.append(A_r1_drop1)
                 DROP.append(A_r1_drop2)
                 DROP.append(A_r2_drop)
@@ -448,6 +401,7 @@ class Solucion(Grafo):
                 #   (b,3)   (a,3)
                 r = rutas[ind_rutas[0]]
                 costo_solucion -= r.getCostoAsociado()
+                
                 #Descompongo la ruta
                 V_r_left = r.getV()[:ind_A[0]+1]                #1-2-a
                 V_r_middle = r.getV()[ind_A[0]+1:ind_A[1]+1]    #3-4
@@ -469,17 +423,7 @@ class Solucion(Grafo):
                 V_destino = V_r_right[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r_add1 = Arista(V_origen,V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("distintas rutas. A_r_add1")
-                    print("Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-
+                
                 V_origen = r.getV()[ind_A[1]+1]
                 V_destino = V_r_middle[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
@@ -572,14 +516,12 @@ class Solucion(Grafo):
                 V_r1 = r1.getV()
                 V_r1.append(Vertice(1,0))
                 if(V_origen == V_r1[-2]):
-                    #print("El vertice origen de la ruta 1 esta al final del recorrido, se invierte los vertices")
                     V_r1 = V_r1[::-1]
                     ind_A[0] = 1
                 
                 V_r2 = r2.getV()
                 V_r2.append(Vertice(1,0))
                 if(V_destino == V_r2[-2]):
-                    #print("El vertice destino de la ruta 2 esta al final del recorrido, se invierte los vertices")
                     V_r2 = V_r2[::-1]
                     ind_A[1] = 0
                 
@@ -597,29 +539,15 @@ class Solucion(Grafo):
                 A_r1_drop1 = Arista(V_origen, V_destino, peso)
                 #2do DROP
                 V_origen = V_destino
-                try:
-                    V_destino = V_r1[ind_A[0]+2]
-                except:
-                    print("\n"+str(ind_A))
-                    print("Arista azar: "+str(arista_ini))
-                    print("V_r1: "+str(V_r1))
-                    print("ind_A: "+str(ind_A))
-                    print("lista"+str(lista_permitidos))
+                V_destino = V_r1[ind_A[0]+2]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r1_drop2 = Arista(V_origen, V_destino, peso)
+                
                 #2do ADD
                 V_origen = ADD[0].getDestino()
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r1_add2 = Arista(V_origen, V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("A_r1_add2. Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
+                
                 #3er DROP
                 V_origen = V_r2[ind_A[1]]
                 V_destino = V_r2[ind_A[1]+1]
@@ -629,18 +557,7 @@ class Solucion(Grafo):
                 V_destino = V_r1[ind_A[0]+1]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r2_add1 = Arista(V_origen, V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("A_r2_add1. Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][:]))
-                    print("Matriz: "+str(self._matrizDistancias[:][V_destino.getValue()-1]))
-
+                
                 #4to DROP
                 V_origen = V_r2[ind_A[1]+1]
                 V_destino = V_r2[ind_A[1]+2]
@@ -650,15 +567,6 @@ class Solucion(Grafo):
                 V_origen = A_r2_add1.getDestino()
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r2_add2 = Arista(V_origen, V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("Arista azar: "+str(arista_ini))
-                    print("rutas: "+str(rutas))
-                    print("V_origen: "+str(V_origen))
-                    print(V_origen.getValue()-1)
-                    print("V_destino: "+str(V_destino))
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
                 
                 DROP.append(A_r1_drop1)
                 DROP.append(A_r1_drop2)
@@ -725,17 +633,7 @@ class Solucion(Grafo):
                 V_destino = V_r_right[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r_add3 = Arista(V_origen,V_destino, peso)
-                if(peso>=999999999999):
-                    print("\n"+str(ind_A))
-                    print("A_r_add3")
-                    print("rutas: "+str(rutas))
-                    print("Arista azar: "+str(arista_ini))
-                    print("V_origen: "+str(V_origen))
-                    print("V_destino: "+str(V_destino))
-                    print(V_origen.getValue()-1)
-                    print(V_destino.getValue()-1)
-                    print("Matriz: "+str(self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]))
-
+                
                 if(len(V_r_middle)>=2):
                     ADD.append(A_r_add1)
                     ADD.append(A_r_add2)
