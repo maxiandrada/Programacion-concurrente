@@ -45,7 +45,6 @@ class Ventana(tk.Tk):
         self.__spinboxNroIntercambios = []
         self.__eOpt = []
         self.__comboOpt = []
-        self.__nroIntercambios = []
         self.__labelTenureADD = []
         self.__labelTenureDROP = []
         self.__boxADD = []
@@ -81,16 +80,13 @@ class Ventana(tk.Tk):
         self.__combo1[i].place(relx=0.4, rely=0.10)
         
         #Nro de intercambios
-        self.__labelNroIntercambios.append(tk.Label(frame, text= "Max Intercambios"))
+        self.__labelNroIntercambios.append(tk.Label(frame, text= "Intercambio inicial"))
         self.__labelNroIntercambios[i].place(relx=0.2, rely = 0.20)
-        self.__nroIntercambios.append(tk.IntVar())
-        self.__spinboxNroIntercambios.append(tk.Spinbox(frame, from_ = 1, to = 2, width = 5, state = "disabled", textvariable = self.__nroIntercambios[i]))
-        self.__spinboxNroIntercambios[i].place(relx=0.45, rely=0.20)
         
         self.__combo2list=['2-opt', '3-opt']
         self.__eOpt.append(tk.StringVar())
         self.__comboOpt.append(ttk.Combobox(frame, textvariable=self.__eOpt, values=self.__combo2list, width = 5, state = "disabled"))
-        self.__comboOpt[i].place(relx=0.60, rely=0.20)      
+        self.__comboOpt[i].place(relx=0.45, rely=0.20)      
         
         #Tenure ADD
         self.__labelTenureADD.append(tk.Label(frame, text = "Tenure ADD"))
@@ -133,7 +129,7 @@ class Ventana(tk.Tk):
             for j in range(0,self.__cantidadResolver[i].get()):
                 print("RESOLVIENDO ------------------> "+str(self.__nombreArchivo))
                 self.__cvrp = CVRP(self.__matrizDistancias[i], self.__demanda[i], self.__nroVehiculos[i], self.__capacidad[i],
-                        self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.getSolucionInicial(self.__eSolInicial[i].get()),  self.__nroIntercambios[i].get(),
+                        self.__nombreArchivo+"_"+str(self.__eTime[i].get())+"min", self.getSolucionInicial(self.__eSolInicial[i].get()),
                         self.__eOpt[i].get(), self.__boxADD[i].get(), self.__boxDROP[i].get(), self.__eTime[i].get(), self.__optimo[i])
                 j
 
@@ -156,12 +152,6 @@ class Ventana(tk.Tk):
         self.__combo1[i].set('Vecino mas cercano')
         self.__comboOpt[i].configure(state = "readonly")
         self.__comboOpt[i].set('2-opt')
-
-        #Nro intercambios
-        cantIntercambios = 2
-
-        self.__nroIntercambios[i].set(cantIntercambios)
-        self.__spinboxNroIntercambios[i].configure(state = "readonly", textvariable = self.__nroIntercambios[i])
 
         #Tenure ADD y DROP
         self.__boxADD[i].set(tenureADD)

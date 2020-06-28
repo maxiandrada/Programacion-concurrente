@@ -12,7 +12,7 @@ from clsTxt import clsTxt
 from time import time
 
 class CVRP:
-    def __init__(self, M, D, nroV, capac, archivo, solI, intercamb, opt, tADD, tDROP, tiempo, optimo):
+    def __init__(self, M, D, nroV, capac, archivo, solI, opt, tADD, tDROP, tiempo, optimo):
         self._G = Grafo(M, D)       #Grafo original
         print(len(M))
         self.__S = Solucion(M, D, sum(D))    #Solucion general del CVRP
@@ -24,8 +24,8 @@ class CVRP:
         self.__nroVehiculos = nroV
         self.__tipoSolucionIni = solI
         self.__beta = 1
+        self.__optimosLocales = []
 
-        self.__nroIntercambios=intercamb*2    #corresponde al nro de vertices los intercambios. 1intercambio => 2 vertices
         self.__opt=opt
         self.__optimo = optimo
         self.__tenureADD =  tADD
@@ -98,7 +98,7 @@ class CVRP:
         S.setCostoAsociado(costoTotal)
         S.setCapacidad(cap)
         S.setCapacidadMax(self.__capacidadMax)
-
+        
         return S
 
     def masVisitados(self):
@@ -141,7 +141,7 @@ class CVRP:
         nueva_solucion = copy.deepcopy(self.__S)
         solucion_refer = copy.deepcopy(nueva_solucion)
         nuevo_costo = self.__S.getCostoAsociado()
-
+        
         #Atributos de tiempo e iteraciones
         tiempoIni = time()
         tiempoMax = float(self.__tiempoMaxEjec*60)
@@ -167,10 +167,10 @@ class CVRP:
         
         print("Aplicamos 2-opt")
         while(tiempoEjecuc < tiempoMax):
-            #self.__txt.escribir(cad)
+            timeGrafoDisperso = time()
             lista_permitidos, Aristas = self.getPermitidos(Aristas, lista_tabu, umbral, cond_Optimiz, solucion_refer)    #Lista de elementos que no son tabu
+            #print("tiempo grafo disperso: "+str(time()-timeGrafoDisperso))
             cond_Optimiz = False
-            #self.__txt.escribir(cad)
             ADD = []
             DROP = []
             
@@ -188,7 +188,8 @@ class CVRP:
                 else:
                     print("Aplicamos 2-opt")
                     cond_2opt = cond_3opt = True
-                
+
+            timeSwap = time()    
             if(cond_2opt):
                 nuevas_rutas, aristas_ADD, aristas_DROP, nuevo_costo = nueva_solucion.swap_2opt(lista_permitidos, ind_random, rutas_refer)
             #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
@@ -197,6 +198,8 @@ class CVRP:
             #Para aplicar, cada ruta tiene que tener al menos 3 clientes (o 4 aristas)
             else:
                 nuevas_rutas, aristas_ADD, aristas_DROP, nuevo_costo = nueva_solucion.swap_4opt(lista_permitidos, ind_random, rutas_refer)
+            #print("time swap: "+str(time()-timeSwap))
+            
             tenureADD = self.__tenureADD
             tenureDROP = self.__tenureDROP
             
@@ -221,7 +224,7 @@ class CVRP:
                 else:
                     cad += "\nNuevo optimo. Costo: "+str(nueva_solucion.getCostoAsociado())
                     print(cad)
-                cad += "Lista tabu: "+str(lista_tabu)
+                cad += "\nLista tabu: "+str(lista_tabu)
                 self.__txt.escribir(cad)
                 umbral = self.calculaUmbral(nueva_solucion.getCostoAsociado())
                 tenureADD = self.__tenureMaxADD
@@ -252,18 +255,28 @@ class CVRP:
                 cond_Optimiz = True
                 iteracEstancamiento = 1
                 Aristas = Aristas_Opt
+            elif(iteracEstancamiento>100):
+                porc_Estancamiento = 1.05
+                porc_EstancamientoMax = 1.2
+                self.__beta = 2
+                lista_tabu = []
+                umbral = self.calculaUmbral(nueva_solucion.getCostoAsociado())
             else:
                 nuevas_rutas = rutas_refer
                 nueva_solucion = solucion_refer
             
-            ADD.append(Tabu(aristas_ADD[0], tenureADD))
-            for i in range(0, len(aristas_DROP)):
-                DROP.append(Tabu(aristas_DROP[i], tenureDROP))
-
-            self.decrementaTenure(lista_tabu)
-            lista_tabu.extend(DROP)
-            lista_tabu.extend(ADD)
-
+            if (aristas_ADD != []):
+                ADD.append(Tabu(aristas_ADD[0], tenureADD))
+                for i in range(0, len(aristas_DROP)):
+                    DROP.append(Tabu(aristas_DROP[i], tenureDROP))
+                self.decrementaTenure(lista_tabu)
+                lista_tabu.extend(DROP)
+                lista_tabu.extend(ADD)
+            else:
+                lista_tabu = []
+                porc_Estancamiento = 1.05
+                porc_EstancamientoMax = 1.2
+            
             tiempoEjecuc = time()-tiempoIni
             iterac += 1
             iteracEstancamiento += 1
@@ -312,7 +325,9 @@ class CVRP:
         
         #La lista tabu esta vacia, entonces la lista de permitidas tiene todas las aristas anteriores
         if(len(lista_tabu) == 0):
+            print("len: "+str(len(lista_tabu)))
             ListaPermit = AristasNuevas
+            print("aristas_nuevas: "+str(AristasNuevas))
         #La lista tabu tiene elementos, agrego los que no estan en lista tabu
         else:
             for i in range(0, len(AristasNuevas)):

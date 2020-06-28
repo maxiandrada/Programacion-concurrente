@@ -283,7 +283,13 @@ class Solucion(Grafo):
                 A_r_drop1 = r.getA()[ind_A[0]]
                 A_r_drop2 = r.getA()[ind_A[1]+1]
 
-                V_origen = V_r_middle[-1]    # => (6, )
+                try:
+                    V_origen = V_r_middle[-1]    # => (6, )
+                except ValueError:
+                    print("error")    
+                    print("arista_ini: "+str(arista_ini))    
+                    print("lista de perm: "+str(lista_permitidos))
+                        
                 V_destino = V_r_right[0]
                 peso = self._matrizDistancias[V_origen.getValue()-1][V_destino.getValue()-1]
                 A_r_add = Arista(V_origen,V_destino, peso)   # => (6,4, peso)
@@ -305,7 +311,8 @@ class Solucion(Grafo):
                     sol_factible = True
                     costo_solucion += r.getCostoAsociado()
         #Fin del while (se encontro una solucion factible)
-        #self.setCostoAsociado(costo_solucion)
+        if (not sol_factible):
+            return rutas_orig, [], [], self.getCostoAsociado()
 
         return rutas, ADD[:1], DROP, costo_solucion
 
@@ -465,7 +472,8 @@ class Solucion(Grafo):
                     sol_factible = True 
                     costo_solucion += r.getCostoAsociado()
         #Fin del while (se encontro una solucion factible)
-        #self.setCostoAsociado(costo_solucion)
+        if (not sol_factible):
+            return rutas_orig, [], [], self.getCostoAsociado()
 
         return rutas, ADD[:1], DROP, costo_solucion
             
@@ -662,6 +670,7 @@ class Solucion(Grafo):
                     sol_factible = True
                     costo_solucion += r.getCostoAsociado()
         #Fin del while (se encontro una solucion factible)
-        #self.setCostoAsociado(costo_solucion)
+        if (not sol_factible):
+            return rutas_orig, [], [], self.getCostoAsociado()
 
         return rutas, ADD[:1], DROP, costo_solucion
